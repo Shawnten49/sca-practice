@@ -1,0 +1,43 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: order-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/seata_order?useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: ""
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+seata:
+  tx-service-group: seata_tx_group
+  registry:
+    type: nacos
+    nacos:
+      application: seata-server
+      server-addr: 127.0.0.1:8848
+      group: DEFAULT_GROUP
+      cluster: default
+      username: nacos
+      password: nacos
+  service:
+    vgroup-mapping:
+      seata_tx_group: default
+
+dubbo:
+  application:
+    name: order-service
+    qos-port: 22223
+  registry:
+    address: nacos://127.0.0.1:8848
+
+rocketmq:
+  name-server: 127.0.0.1:9876
+  producer:
+    group: order-producer
+

@@ -1,0 +1,22 @@
+server:
+  port: 8088
+
+spring:
+  application:
+    name: gateway-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/gateway_dashboard?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: gateway
+    password: gateway123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+
+# 业务路由改由数据库（route_config 表）管理，不再写在 YAML 中。
+# 仪表盘保存路由后主动调用 /internal/routes/refresh；本网关另有轮询兜底。
+gateway-dashboard:
+  route-sync:
+    poll-interval-ms: 5000
+    internal-token: gd-internal-token-dev

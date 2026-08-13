@@ -1,0 +1,50 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: user-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+    sentinel:
+      transport:
+        dashboard: 127.0.0.1:8858
+        port: 8719
+      eager: true
+      datasource:
+        flow-ds:
+          nacos:
+            server-addr: 127.0.0.1:8848
+            dataId: user-service-sentinel-flow
+            groupId: DEFAULT_GROUP
+            rule-type: flow
+
+feign:
+  sentinel:
+    enabled: true
+
+rocketmq:
+  name-server: 127.0.0.1:9876
+  producer:
+    group: order-producer
+
+seata:
+  tx-service-group: seata_tx_group
+  registry:
+    type: nacos
+    nacos:
+      application: seata-server
+      server-addr: 127.0.0.1:8848
+      group: DEFAULT_GROUP
+      cluster: default
+      username: nacos
+      password: nacos
+  service:
+    vgroup-mapping:
+      seata_tx_group: default
+
+logging:
+  level:
+    org.apache.seata: INFO

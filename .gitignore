@@ -1,0 +1,23 @@
+# OS
+.DS_Store
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# Maven / Java
+target/
+*.class
+
+# 日志
+logs/
+*.log
+
+# 本地工具配置
+.claude/
+
+# 本地环境变量 / 密钥占位
+.env
+*.local.yml
