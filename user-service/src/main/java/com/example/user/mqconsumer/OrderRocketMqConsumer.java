@@ -9,9 +9,9 @@ import org.springframework.stereotype.Component;
 @Component
 @RocketMQMessageListener(topic = "topic-order", consumerGroup = "order-consumer",
         selectorExpression = "pay-success")
-public class OrderRocektMqConsumer implements RocketMQListener<String> {
+public class OrderRocketMqConsumer implements RocketMQListener<String> {
 
-    private static final Logger log = LoggerFactory.getLogger(OrderRocektMqConsumer.class);
+    private static final Logger log = LoggerFactory.getLogger(OrderRocketMqConsumer.class);
 
     @Override
     public void onMessage(String msg) {

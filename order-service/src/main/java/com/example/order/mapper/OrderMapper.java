@@ -1,4 +1,3 @@
-// /Users/shawn/codexwork/sca-practice/order-service/src/main/java/com/example/order/OrderMapper.java
 package com.example.order.mapper;
 
 import com.example.order.domain.Order;
