@@ -1,6 +1,6 @@
 # sca-practice
 
-Spring Cloud Alibaba 分布式微服务学习实践项目。从零搭建一套多模块微服务应用，覆盖注册发现、配置中心、远程调用、网关、限流降级、分布式事务、消息队列、Dubbo RPC 等核心能力，与课程《Spring Cloud Alibaba 从入门到实战》1~11 课一一对应。
+Spring Cloud Alibaba 分布式微服务学习实践项目。从零搭建一套多模块微服务应用，覆盖注册发现、配置中心、远程调用、网关、限流降级、分布式事务、消息队列、Dubbo RPC 等核心能力。
 
 ## 技术栈
 
@@ -110,29 +110,13 @@ cd gateway-service && java -jar target/gateway-service-0.0.1-SNAPSHOT.jar # 8088
 - 触发"下单 + 扣库存"链路的失败场景，观察两库数据是否同步回滚（Seata AT）；
 - 打开 RocketMQ Dashboard `http://127.0.0.1:7070` 查看 topic 与消息轨迹。
 
-## 与课程对照
-
-| 课程 | 知识点 | 对应模块 / 代码 |
-| --- | --- | --- |
-| 第 1 课 | Spring Boot 快速上手 | `hello-sca` |
-| 第 2 课 | Nacos 服务注册与发现 | `user-service`、`hello-sca` |
-| 第 3 课 | OpenFeign + LoadBalancer 远程调用 | `HelloClient`（user）、`StockClient`（order） |
-| 第 4 课 | Nacos 配置中心 | `hello-sca`（spring.config.import） |
-| 第 5 课 | Spring Cloud Gateway | `gateway-service`（DB 动态路由） |
-| 第 6 课 | Sentinel 限流降级 | `UserService#xxx`（@SentinelResource） |
-| 第 7 课 | Seata AT 分布式事务 | `OrderService`（TM）+ `StockService`（RM）+ `sql/` |
-| 第 8 课 | Dubbo RPC | `dubbo-api` + `StockDubboServiceImpl` / `OrderDubboService` |
-| 第 9 课 | RocketMQ 消息与事务消息 | `OrderMqService` / `OrderMqTransactionListener` / `PointMqConsumer` |
-| 第 10 课 | Redis 缓存与分布式锁 | 独立实操，不依赖本仓库 |
-| 第 11 课 | 总结与面试冲刺 | — |
-
 ## 目录结构
 
 ```text
 sca-practice/
 ├── pom.xml                 # 父 POM：统一版本管理（双 BOM + Dubbo/RocketMQ 版本）
 ├── dubbo-api/              # Dubbo 公共接口
-├── hello-sca/              # 第 1 课入门服务
+├── hello-sca/              # 微服务入门服务
 ├── user-service/           # 用户服务
 ├── order-service/          # 订单服务（TM + 事务消息）
 ├── stock-service/          # 库存服务（RM + Dubbo 提供者）
@@ -143,4 +127,4 @@ sca-practice/
 ## 说明
 
 - 各服务 `application.yml` 中的账号密码均为**本地开发环境默认值**（如 Nacos `nacos/nacos`、MySQL root 空密码、网关 `gateway123`），仅用于本机学习；部署到真实环境前应通过环境变量 / 配置中心外部化并脱敏。
-- 本仓库默认以**私有仓库**管理；如需公开作为面试作品，建议先把 `gateway-service` 中的内部 token 与密码改为占位符。
+- 本仓库默认以**私有仓库**管理。
