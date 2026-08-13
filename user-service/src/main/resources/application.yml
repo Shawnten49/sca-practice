@@ -4,6 +4,11 @@ server:
 spring:
   application:
     name: user-service
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      # password: <若本地 redis 配置了 requirepass 则填写>
   cloud:
     nacos:
       discovery:
@@ -38,7 +43,3 @@ management:
   endpoint:
     health:
       show-details: always
-
-logging:
-  level:
-    org.apache.seata: INFO
