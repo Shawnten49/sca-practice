@@ -1,15 +1,7 @@
 package com.example.order.domain;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-
-@Getter
-@Setter
-@AllArgsConstructor
-public class Order {
-    private Long orderId;    // 业务主键：回查时靠它查订单表
-    private Long userId;     // 给哪个用户加积分
-    private Long productId;  //产品ID
-    private Integer count;   //购买数量
+/**
+ * 订单业务对象（只读值对象）：本地事务插入与事务消息回查时使用。
+ */
+public record Order(Long orderId, Long userId, Long productId, Integer count) {
 }

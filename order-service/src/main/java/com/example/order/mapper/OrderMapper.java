@@ -5,6 +5,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public class OrderMapper {
 
@@ -17,14 +19,13 @@ public class OrderMapper {
     public void insert(Order order) {
         jdbcTemplate.update(
                 "insert into orders (id, user_id, product_id, count) values (?, ?, ?, ?)",
-                order.getOrderId(), order.getUserId(), order.getProductId(), order.getCount());
+                order.orderId(), order.userId(), order.productId(), order.count());
     }
 
-    public Order selectById(Long id) {
-        var results = jdbcTemplate.query(
+    public Optional<Order> selectById(Long id) {
+        return jdbcTemplate.query(
                 "SELECT id, user_id, product_id, count FROM orders WHERE id = ?",
-                rowMapper, id);
-        return results.isEmpty() ? null : results.get(0);
+                rowMapper, id).stream().findFirst();
     }
 
     private final RowMapper<Order> rowMapper = (rs, rowNum) ->

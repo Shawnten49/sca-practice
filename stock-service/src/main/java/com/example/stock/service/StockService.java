@@ -3,11 +3,11 @@ package com.example.stock.service;
 import com.example.exception.BusinessException;
 import com.example.exception.ErrorCode;
 import com.example.exception.InsufficientStockException;
+import com.example.stock.domain.Stock;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class StockService {
@@ -31,9 +31,11 @@ public class StockService {
         }
     }
 
-    public Map<String, Object> query(Long productId) {
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                "select product_id, quantity from stock where product_id = ?", productId);
+    public Stock query(Long productId) {
+        List<Stock> rows = jdbcTemplate.query(
+                "select product_id, quantity from stock where product_id = ?",
+                (rs, rowNum) -> new Stock(rs.getLong("product_id"), rs.getInt("quantity")),
+                productId);
         if (rows.isEmpty()) {
             throw new BusinessException(ErrorCode.NOT_FOUND, "商品不存在: productId=" + productId);
         }

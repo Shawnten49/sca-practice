@@ -1,47 +1,51 @@
 package com.example.order.listener;
 
-import com.example.order.domain.Order;
 import com.example.dto.PointAddMessage;
+import com.example.order.domain.Order;
 import com.example.order.mapper.OrderMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQTransactionListener;
 import org.apache.rocketmq.spring.core.RocketMQLocalTransactionListener;
 import org.apache.rocketmq.spring.core.RocketMQLocalTransactionState;
 import org.apache.rocketmq.spring.support.RocketMQHeaders;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Component
 @RocketMQTransactionListener
-@Slf4j
 public class OrderMqTransactionListener implements RocketMQLocalTransactionListener {
 
-    @Autowired
-    private TransactionTemplate transactionTemplate;
+    private static final Logger log = LoggerFactory.getLogger(OrderMqTransactionListener.class);
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final TransactionTemplate transactionTemplate;
+    private final ObjectMapper objectMapper;
+    private final OrderMapper orderMapper;
 
-    @Autowired
-    private OrderMapper orderMapper;
+    public OrderMqTransactionListener(TransactionTemplate transactionTemplate,
+                                      ObjectMapper objectMapper,
+                                      OrderMapper orderMapper) {
+        this.transactionTemplate = transactionTemplate;
+        this.objectMapper = objectMapper;
+        this.orderMapper = orderMapper;
+    }
 
     @Override
     public RocketMQLocalTransactionState executeLocalTransaction(Message msg, Object arg) {
         try {
             PointAddMessage body = objectMapper.readValue((byte[]) msg.getPayload(), PointAddMessage.class);
-            // 1. 本地事务：插入订单，且必须先提交（原因见 3.3 第 2 条）
+            // 1. 本地事务：插入订单，且必须先提交（本地提交成功后才允许消费者看到消息）
             transactionTemplate.execute(status -> {
                 orderMapper.insert(new Order(body.orderId(), body.userId(), body.productId(), body.count()));
                 return null;
             });
-            // 2. 数据库已提交，才允许消费者看到这条消息
-            //测试使用返回UNKOWN
+            // 2. 数据库已提交 → 提交半消息
             return RocketMQLocalTransactionState.COMMIT;
         } catch (Exception e) {
-            log.error("本地事务失败，丢弃消息 orderId={}", msg.getHeaders().get(RocketMQHeaders.PREFIX + RocketMQHeaders.KEYS), e);
+            log.error("本地事务失败，丢弃消息 orderId={}",
+                    msg.getHeaders().get(RocketMQHeaders.PREFIX + RocketMQHeaders.KEYS), e);
             // 3. 数据库回滚了，消息一起丢弃
             return RocketMQLocalTransactionState.ROLLBACK;
         }
@@ -59,14 +63,13 @@ public class OrderMqTransactionListener implements RocketMQLocalTransactionListe
             log.error("回查失败：orderId 非法: {}", orderId, e);
             return RocketMQLocalTransactionState.UNKNOWN;
         }
-        Order order = orderMapper.selectById(orderIdValue);
-        if (order != null) {
-            // 订单在 → 说明本地事务其实提交成功了 → 补一个 COMMIT
+
+        // 订单在 → 本地事务其实提交成功了 → 补 COMMIT；不在 → 丢弃消息
+        boolean orderExists = orderMapper.selectById(orderIdValue).isPresent();
+        if (orderExists) {
             log.info("订单在，补一个 COMMIT，orderId={}", orderId);
             return RocketMQLocalTransactionState.COMMIT;
         }
-        // 订单不在 → 本地事务没执行或已回滚 → 丢弃消息
-        // 若暂时拿不准（如订单在分库分表、当前查不到），先返回 UNKNOW，Broker 稍后再查
         log.info("订单不在，补一个 ROLLBACK，orderId={}", orderId);
         return RocketMQLocalTransactionState.ROLLBACK;
     }

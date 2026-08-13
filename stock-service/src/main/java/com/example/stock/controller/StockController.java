@@ -1,11 +1,11 @@
 package com.example.stock.controller;
 
+import com.example.stock.domain.Stock;
 import com.example.stock.service.StockService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
 
 @RestController
 public class StockController {
@@ -24,7 +24,7 @@ public class StockController {
     }
 
     @GetMapping("/stock/query")
-    public Map<String, Object> query(@RequestParam Long productId) {
+    public Stock query(@RequestParam Long productId) {
         return stockService.query(productId);
     }
 }

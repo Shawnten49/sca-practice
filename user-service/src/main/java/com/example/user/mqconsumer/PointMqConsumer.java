@@ -1,15 +1,17 @@
 package com.example.user.mqconsumer;
 
 import com.example.dto.PointAddMessage;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
-@Slf4j
 @RocketMQMessageListener(topic = "topic-point", consumerGroup = "point-consumer")
 public class PointMqConsumer implements RocketMQListener<PointAddMessage> {
+
+    private static final Logger log = LoggerFactory.getLogger(PointMqConsumer.class);
 
     @Override
     public void onMessage(PointAddMessage msg) {

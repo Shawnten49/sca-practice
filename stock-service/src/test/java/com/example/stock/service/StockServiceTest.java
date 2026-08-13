@@ -2,11 +2,12 @@ package com.example.stock.service;
 
 import com.example.exception.BusinessException;
 import com.example.exception.InsufficientStockException;
+import com.example.stock.domain.Stock;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -50,7 +51,7 @@ class StockServiceTest {
 
     @Test
     void queryNotFoundThrows404() {
-        when(jdbcTemplate.queryForList(anyString(), eq(99L))).thenReturn(List.of());
+        when(jdbcTemplate.query(anyString(), any(RowMapper.class), eq(99L))).thenReturn(List.of());
 
         assertThatThrownBy(() -> stockService.query(99L))
                 .isInstanceOf(BusinessException.class)
@@ -58,10 +59,10 @@ class StockServiceTest {
     }
 
     @Test
-    void queryFoundReturnsRow() {
-        when(jdbcTemplate.queryForList(anyString(), eq(1L)))
-                .thenReturn(List.of(Map.of("product_id", 1, "quantity", 100)));
+    void queryFoundReturnsTypedStock() {
+        when(jdbcTemplate.query(anyString(), any(RowMapper.class), eq(1L)))
+                .thenReturn(List.of(new Stock(1L, 100)));
 
-        assertThat(stockService.query(1L)).containsEntry("quantity", 100);
+        assertThat(stockService.query(1L)).isEqualTo(new Stock(1L, 100));
     }
 }

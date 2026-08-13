@@ -1,26 +1,34 @@
 package com.example.order.service;
 
 import com.example.dto.PointAddMessage;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.TransactionSendResult;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.apache.rocketmq.spring.support.RocketMQHeaders;
 import org.apache.seata.common.util.IdWorker;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
 @Service
-@Slf4j
 public class OrderMqService {
-    @Autowired
-    private RocketMQTemplate rocketMQTemplate;
+
+    private static final Logger log = LoggerFactory.getLogger(OrderMqService.class);
+
+    /** IdWorker 线程安全，全局共用一个即可，避免每次下单都新建。 */
+    private static final IdWorker ID_WORKER = new IdWorker(0L);
+
+    private final RocketMQTemplate rocketMQTemplate;
+
+    public OrderMqService(RocketMQTemplate rocketMQTemplate) {
+        this.rocketMQTemplate = rocketMQTemplate;
+    }
 
     public void createOrder(Long userId, Long productId, Integer count) {
         // 关键点 1：订单号必须先预生成（雪花 ID / UUID 都行），
         // 这样消息体里能带上 orderId，本地事务和回查都靠它定位
-        Long orderId = new IdWorker(0L).nextId();
+        Long orderId = ID_WORKER.nextId();
 
         PointAddMessage body = new PointAddMessage(orderId, userId, productId, count, count * 100);
         Message<PointAddMessage> message = MessageBuilder.withPayload(body)
