@@ -1,9 +1,9 @@
 package com.example.order.service;
 
 import com.example.api.StockDubboService;
+import com.example.order.mapper.OrderMapper;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.junit.jupiter.api.Test;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -16,10 +16,10 @@ import static org.mockito.Mockito.when;
 
 class OrderDubboServiceTest {
 
-    private final JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
+    private final OrderMapper orderMapper = mock(OrderMapper.class);
     private final RocketMQTemplate rocketMQTemplate = mock(RocketMQTemplate.class);
     private final StockDubboService stockDubboService = mock(StockDubboService.class);
-    private final OrderDubboService orderDubboService = new OrderDubboService(jdbcTemplate, rocketMQTemplate);
+    private final OrderDubboService orderDubboService = new OrderDubboService(orderMapper, rocketMQTemplate);
 
     @Test
     void createOrderSuccessThenMessageSent() {
@@ -29,7 +29,6 @@ class OrderDubboServiceTest {
         String result = orderDubboService.createOrder(10L, 1L, 2, false);
         assertThat(result).contains("下单成功");
 
-        orderDubboService.sendPaySuccessMessage(10L, 1L, 2);
         verify(rocketMQTemplate).convertAndSend(eq("topic-order:pay-success"), anyString());
     }
 

@@ -1,6 +1,9 @@
 package com.example.order.service;
 
 import com.example.order.client.StockClient;
+import com.example.order.domain.Order;
+import com.example.order.mapper.OrderMapper;
+import org.apache.seata.common.util.IdWorker;
 import org.apache.seata.spring.annotation.GlobalTransactional;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -8,21 +11,21 @@ import org.springframework.stereotype.Service;
 @Service
 public class OrderService {
 
-    private final JdbcTemplate jdbcTemplate;
+    private final OrderMapper orderMapper;
     private final StockClient stockClient;
 
-    public OrderService(JdbcTemplate jdbcTemplate, StockClient stockClient) {
-        this.jdbcTemplate = jdbcTemplate;
+    private static final IdWorker ID_WORKER = new IdWorker(2L);
+
+    public OrderService(OrderMapper orderMapper, StockClient stockClient) {
+        this.orderMapper = orderMapper;
         this.stockClient = stockClient;
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
     public String createOrder(Long userId, Long productId, Integer count, boolean fail) {
+        Long orderId = ID_WORKER.nextId();
         // 1) 本库插订单
-        jdbcTemplate.update(
-                "insert into orders (user_id, product_id, count) values (?, ?, ?)",
-                userId, productId, count);
-
+        orderMapper.insert(new Order(orderId, userId, productId, count));
         // 2) 跨服务扣库存（XID 由 Seata 自动通过 Feign 传递）
         String stockResult = stockClient.deduct(productId, count);
 
