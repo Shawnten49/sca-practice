@@ -8,7 +8,8 @@ import org.springframework.stereotype.Component;
 public class RouteSyncProperties {
 
     private long pollIntervalMs = 5000;
-    private String internalToken = "gd-internal-token-dev";
+    /** 内网管理接口令牌。不设代码默认值：生产环境通过环境变量/配置注入（见 application.yml）；留空表示不鉴权，仅限本地开发。 */
+    private String internalToken;
 
     public long getPollIntervalMs() {
         return pollIntervalMs;

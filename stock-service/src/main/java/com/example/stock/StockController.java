@@ -19,6 +19,9 @@ public class StockController {
     @GetMapping("/stock/deduct")
     public String deduct(@RequestParam Long productId,
                          @RequestParam Integer count) {
+        if (count == null || count <= 0) {
+            throw new IllegalArgumentException("count 必须大于 0");
+        }
         int updated = jdbcTemplate.update(
                 "update stock set quantity = quantity - ? where product_id = ? and quantity >= ?",
                 count, productId, count);

@@ -15,6 +15,9 @@ public class StockDubboServiceImpl implements StockDubboService {
 
     @Override
     public String deduct(Long productId, Integer count) {
+        if (count == null || count <= 0) {
+            throw new IllegalArgumentException("count 必须大于 0");
+        }
         int updated = jdbcTemplate.update(
                 "update stock set quantity = quantity - ? where product_id = ? and quantity >= ?",
                 count, productId, count);

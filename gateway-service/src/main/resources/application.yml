@@ -19,4 +19,4 @@ spring:
 gateway-dashboard:
   route-sync:
     poll-interval-ms: 5000
-    internal-token: gd-internal-token-dev
+    internal-token: ${GATEWAY_INTERNAL_TOKEN:gd-internal-token-dev}  # 生产用环境变量 GATEWAY_INTERNAL_TOKEN 覆盖

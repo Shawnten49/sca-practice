@@ -30,21 +30,6 @@ rocketmq:
   producer:
     group: order-producer
 
-seata:
-  tx-service-group: seata_tx_group
-  registry:
-    type: nacos
-    nacos:
-      application: seata-server
-      server-addr: 127.0.0.1:8848
-      group: DEFAULT_GROUP
-      cluster: default
-      username: nacos
-      password: nacos
-  service:
-    vgroup-mapping:
-      seata_tx_group: default
-
 logging:
   level:
     org.apache.seata: INFO

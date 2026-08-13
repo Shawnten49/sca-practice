@@ -52,7 +52,14 @@ public class OrderMqTransactionListener implements RocketMQLocalTransactionListe
         String orderId = (String) msg.getHeaders().get(RocketMQHeaders.PREFIX + RocketMQHeaders.KEYS);
         log.info("检查本地事务，orderId={}", orderId);
 
-        Order order = orderMapper.selectById(Long.valueOf(orderId));
+        Long orderIdValue;
+        try {
+            orderIdValue = Long.valueOf(orderId);
+        } catch (NumberFormatException e) {
+            log.error("回查失败：orderId 非法: {}", orderId, e);
+            return RocketMQLocalTransactionState.UNKNOWN;
+        }
+        Order order = orderMapper.selectById(orderIdValue);
         if (order != null) {
             // 订单在 → 说明本地事务其实提交成功了 → 补一个 COMMIT
             log.info("订单在，补一个 COMMIT，orderId={}", orderId);
