@@ -14,5 +14,14 @@ spring:
     import:
       - nacos:hello-service.yaml?group=DEFAULT_GROUP&refreshEnabled=true
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
 demo:
   message: local-hello

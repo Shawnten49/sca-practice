@@ -4,15 +4,23 @@ server:
 spring:
   application:
     name: stock-service
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
   cloud:
     nacos:
       discovery:
         server-addr: 127.0.0.1:8848
   datasource:
-    url: jdbc:mysql://127.0.0.1:3306/seata_stock?useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://127.0.0.1:3306/seata_stock?createDatabaseIfNotExist=true&useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai
     username: root
     password: ""
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 10000
 
 seata:
   tx-service-group: seata_tx_group
@@ -28,6 +36,15 @@ seata:
   service:
     vgroup-mapping:
       seata_tx_group: default
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
 
 dubbo:
   application:

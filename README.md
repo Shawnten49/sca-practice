@@ -15,6 +15,7 @@ Spring Cloud Alibaba 分布式微服务学习实践项目。从零搭建一套�
 | 分布式事务 | Seata 2.6.0（AT 模式） |
 | 消息队列 | RocketMQ 5.5.0（含事务消息） |
 | 数据库 | MySQL 8.4 |
+| 工程化 | Flyway 数据库迁移 · OpenAPI (springdoc) · Actuator 健康检查 · JUnit 5 + Mockito |
 
 ## 模块结构
 
@@ -75,7 +76,9 @@ user-service   order-service        (hello-sca :8082)
 mysql -u root -e "CREATE DATABASE IF NOT EXISTS seata DEFAULT CHARACTER SET utf8mb4;"
 mysql -u root seata < sql/seata-server-mysql.sql
 
-# 业务库（orders / stock + 各自 undo_log + 初始库存）
+# 业务库：order/stock 服务启动时由 Flyway 自动建表（orders/stock/undo_log + 初始库存），
+# 数据库本身也会由 JDBC URL 的 createDatabaseIfNotExist=true 自动创建。
+# 如需手动初始化（等价于 Flyway 做的工作），仍可执行：
 mysql -u root < sql/init-seata.sql
 
 # gateway-service 依赖的 gateway_dashboard 库（route_config 等表）
@@ -110,6 +113,13 @@ cd gateway-service && java -jar target/gateway-service-0.0.1-SNAPSHOT.jar # 8088
 - 直接调各服务接口（如 `GET http://127.0.0.1:8083/order/...`）或通过网关 `http://127.0.0.1:8088/...` 访问；
 - 触发"下单 + 扣库存"链路的失败场景，观察两库数据是否同步回滚（Seata AT）；
 - 打开 RocketMQ Dashboard `http://127.0.0.1:7070` 查看 topic 与消息轨迹。
+
+## 工程化能力
+
+- **数据库迁移**：order/stock 服务内置 Flyway（`src/main/resources/db/migration/`），启动自动建表、幂等可重复执行；`baseline-on-migrate` 兼容已手动建表的旧库；
+- **API 文档**：每个服务内置 springdoc，访问 `http://127.0.0.1:{端口}/swagger-ui.html` 查看/调试接口；
+- **健康检查**：每个服务暴露 `http://127.0.0.1:{端口}/actuator/health`（含 `info`、`metrics`）；
+- **单元测试**：`mvn test`（核心服务 + 共享模块共 13 个用例，覆盖异常映射、扣库存、下单与消息时序）。
 
 ## 目录结构
 

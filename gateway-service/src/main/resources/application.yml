@@ -9,6 +9,10 @@ spring:
     username: gateway
     password: gateway123
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 10000
   cloud:
     nacos:
       discovery:
@@ -16,6 +20,15 @@ spring:
 
 # 业务路由改由数据库（route_config 表）管理，不再写在 YAML 中。
 # 仪表盘保存路由后主动调用 /internal/routes/refresh；本网关另有轮询兜底。
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
 gateway-dashboard:
   route-sync:
     poll-interval-ms: 5000
