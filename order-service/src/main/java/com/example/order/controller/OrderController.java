@@ -35,7 +35,10 @@ public class OrderController {
                          @RequestParam Long productId,
                          @RequestParam Integer count,
                          @RequestParam(defaultValue = "false") boolean fail) {
-        return orderDubboService.createOrder(userId, productId, count, fail);
+        String result = orderDubboService.createOrder(userId, productId, count, fail);
+        // 全局事务已提交，再发 MQ 消息（after-commit 模式）
+        orderDubboService.sendPaySuccessMessage(userId, productId, count);
+        return result;
     }
 
     @GetMapping("/order/create3")

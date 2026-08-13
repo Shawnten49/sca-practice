@@ -1,6 +1,6 @@
 package com.example.user.controller;
 
-import com.example.user.HelloClient;
+import com.example.user.client.HelloClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 

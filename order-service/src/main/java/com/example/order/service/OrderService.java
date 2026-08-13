@@ -1,6 +1,6 @@
 package com.example.order.service;
 
-import com.example.order.StockClient;
+import com.example.order.client.StockClient;
 import org.apache.seata.spring.annotation.GlobalTransactional;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;

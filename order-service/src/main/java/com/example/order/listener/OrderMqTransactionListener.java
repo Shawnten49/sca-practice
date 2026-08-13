@@ -1,7 +1,7 @@
 package com.example.order.listener;
 
 import com.example.order.domain.Order;
-import com.example.order.domain.PointAddMessage;
+import com.example.dto.PointAddMessage;
 import com.example.order.mapper.OrderMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +34,7 @@ public class OrderMqTransactionListener implements RocketMQLocalTransactionListe
             PointAddMessage body = objectMapper.readValue((byte[]) msg.getPayload(), PointAddMessage.class);
             // 1. 本地事务：插入订单，且必须先提交（原因见 3.3 第 2 条）
             transactionTemplate.execute(status -> {
-                orderMapper.insert(new Order(body.getOrderId(), body.getUserId(), body.getProductId(), body.getCount()));
+                orderMapper.insert(new Order(body.orderId(), body.userId(), body.productId(), body.count()));
                 return null;
             });
             // 2. 数据库已提交，才允许消费者看到这条消息

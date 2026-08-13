@@ -20,6 +20,7 @@ Spring Cloud Alibaba 分布式微服务学习实践项目。从零搭建一套�
 
 | 模块 | 端口 | 职责 | 涉及组件 |
 | --- | --- | --- | --- |
+| `sca-common` | — | 共享模块：消息 DTO、业务异常体系、全局异常处理 | Spring Web |
 | `dubbo-api` | — | 跨服务共享的 Dubbo 接口定义（`StockDubboService`） | Dubbo |
 | `hello-sca` | 8082 | 第一个 Spring Boot 服务，演示 Nacos 配置中心读取 | Nacos Config |
 | `user-service` | 8081 | 用户服务：OpenFeign 调用 hello、Sentinel 限流、RocketMQ 消费者 | OpenFeign · Sentinel · RocketMQ |
@@ -115,6 +116,7 @@ cd gateway-service && java -jar target/gateway-service-0.0.1-SNAPSHOT.jar # 8088
 ```text
 sca-practice/
 ├── pom.xml                 # 父 POM：统一版本管理（双 BOM + Dubbo/RocketMQ 版本）
+├── sca-common/             # 共享模块：DTO / 业务异常 / 全局异常处理
 ├── dubbo-api/              # Dubbo 公共接口
 ├── hello-sca/              # 微服务入门服务
 ├── user-service/           # 用户服务

@@ -1,6 +1,6 @@
 package com.example.order.service;
 
-import com.example.order.domain.PointAddMessage;
+import com.example.dto.PointAddMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.TransactionSendResult;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;

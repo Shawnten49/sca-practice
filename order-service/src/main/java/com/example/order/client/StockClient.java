@@ -1,4 +1,4 @@
-package com.example.order;
+package com.example.order.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;

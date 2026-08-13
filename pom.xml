@@ -32,6 +32,7 @@
     </properties>
 
     <modules>
+        <module>sca-common</module>
         <module>dubbo-api</module>
         <module>hello-sca</module>
         <module>user-service</module>
@@ -60,6 +61,11 @@
             <dependency>
                 <groupId>com.example</groupId>
                 <artifactId>dubbo-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example</groupId>
+                <artifactId>sca-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <!-- Dubbo 依赖（SCA 2025.x 不再内置管理） -->
