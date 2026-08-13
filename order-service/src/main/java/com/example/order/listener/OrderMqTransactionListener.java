@@ -65,7 +65,15 @@ public class OrderMqTransactionListener implements RocketMQLocalTransactionListe
         }
 
         // 订单在 → 本地事务其实提交成功了 → 补 COMMIT；不在 → 丢弃消息
-        boolean orderExists = orderMapper.selectById(orderIdValue).isPresent();
+        boolean orderExists;
+        try {
+            orderExists = orderMapper.selectById(orderIdValue).isPresent();
+        } catch (Exception e) {
+            // 查询异常（如 DB 抖动）时无法确认本地事务结果：返回 UNKNOWN，
+            // 让 Broker 稍后再次回查，绝不能擅自 COMMIT/ROLLBACK
+            log.error("回查失败：查询订单异常 orderId={}", orderId, e);
+            return RocketMQLocalTransactionState.UNKNOWN;
+        }
         if (orderExists) {
             log.info("订单在，补一个 COMMIT，orderId={}", orderId);
             return RocketMQLocalTransactionState.COMMIT;
