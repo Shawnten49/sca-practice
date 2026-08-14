@@ -4,11 +4,24 @@ server:
 spring:
   application:
     name: user-service
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
   data:
     redis:
       host: 127.0.0.1
       port: 6379
       # password: <若本地 redis 配置了 requirepass 则填写>
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/seata_user?createDatabaseIfNotExist=true&useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: ""
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 10000
   cloud:
     nacos:
       discovery:
@@ -43,3 +56,12 @@ management:
   endpoint:
     health:
       show-details: always
+
+mybatis-plus:
+  # 人工维护的 SQL 映射文件位置
+  mapper-locations: classpath*:mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    banner: false

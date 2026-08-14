@@ -1,12 +1,16 @@
 package com.example.user.mqconsumer;
 
 import com.example.dto.PointAddMessage;
+import com.example.user.domain.UserPoints;
+import com.example.user.mapper.UserMapper;
+import com.example.user.mapper.UserPointsMapper;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Duration;
 
@@ -16,15 +20,27 @@ public class PointMqConsumer implements RocketMQListener<PointAddMessage> {
 
     private static final Logger log = LoggerFactory.getLogger(PointMqConsumer.class);
 
-    /** 去重键 TTL：需覆盖 RocketMQ 最长重试窗口；真正的生产兜底还应配合数据库唯一索引。 */
+    /** 去重键 TTL：需覆盖 RocketMQ 最长重试窗口；生产兜底由 user_points.order_id 唯一索引保证。 */
     private static final Duration DEDUP_TTL = Duration.ofHours(24);
 
     private static final String DEDUP_KEY_PREFIX = "mq:dedup:point:";
 
     private final StringRedisTemplate redisTemplate;
 
-    public PointMqConsumer(StringRedisTemplate redisTemplate) {
+    private final UserPointsMapper userPointsMapper;
+
+    private final UserMapper userMapper;
+
+    private final TransactionTemplate transactionTemplate;
+
+    public PointMqConsumer(StringRedisTemplate redisTemplate,
+                           UserPointsMapper userPointsMapper,
+                           UserMapper userMapper,
+                           TransactionTemplate transactionTemplate) {
         this.redisTemplate = redisTemplate;
+        this.userPointsMapper = userPointsMapper;
+        this.userMapper = userMapper;
+        this.transactionTemplate = transactionTemplate;
     }
 
     @Override
@@ -49,8 +65,25 @@ public class PointMqConsumer implements RocketMQListener<PointAddMessage> {
         }
     }
 
-    /** 业务动作：给用户加积分。当前为演示实现，真实场景在这里写积分落库。 */
+    /**
+     * 业务动作：积分流水落库 + 累加用户积分，两者在同一本地事务中。
+     * INSERT IGNORE：order_id 唯一索引命中时静默忽略（返回 0）；
+     * 只有真正插入成功（返回 1）才累加 users.points，避免重复加分。
+     */
     void addPoints(PointAddMessage msg) {
-        log.info("给用户 {} 加 {} 积分（来自订单 {}）", msg.userId(), msg.points(), msg.orderId());
+        transactionTemplate.executeWithoutResult(status -> {
+            int inserted = userPointsMapper.insertUserPoints(UserPoints.builder()
+                    .userId(msg.userId())
+                    .orderId(msg.orderId())
+                    .points(msg.points())
+                    .build());
+            if (inserted == 0) {
+                // 唯一索引兜底：该订单积分已落库（如 Redis 去重键过期后的重试），不重复累加
+                log.info("积分流水已存在（INSERT IGNORE 兜底），跳过 orderId={}", msg.orderId());
+                return;
+            }
+            userMapper.increasePoints(msg.userId(), msg.points());
+            log.info("给用户 {} 加 {} 积分（来自订单 {}）", msg.userId(), msg.points(), msg.orderId());
+        });
     }
 }

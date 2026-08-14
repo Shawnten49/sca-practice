@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.user.mapper.UserPointsMapper">
+
+    <!-- 插入积分流水：id 数据库自增；order_id 唯一索引兜底幂等 -->
+    <insert id="insertUserPoints" parameterType="com.example.user.domain.UserPoints"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT IGNORE INTO user_points (user_id, order_id, points)
+        VALUES (#{userId}, #{orderId}, #{points})
+    </insert>
+
+    <select id="selectByOrderId" resultType="com.example.user.domain.UserPoints">
+        SELECT id, user_id, order_id, points, create_time
+        FROM user_points
+        WHERE order_id = #{orderId}
+    </select>
+
+</mapper>
