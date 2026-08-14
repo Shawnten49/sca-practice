@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.stock.mapper.StockMapper">
+
+    <!-- 原子条件扣减：只有扣减前库存充足才更新，返回 0 即库存不足（防超卖） -->
+    <update id="deductStock">
+        UPDATE stock SET quantity = quantity - #{count}
+        WHERE product_id = #{productId} AND quantity &gt;= #{count}
+    </update>
+
+    <select id="selectStockByProductId" resultType="com.example.stock.domain.Stock">
+        SELECT id, product_id, quantity
+        FROM stock
+        WHERE product_id = #{productId}
+    </select>
+
+</mapper>
