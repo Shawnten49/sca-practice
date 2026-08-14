@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.order.mapper.OrderMapper">
+
+    <!-- 插入订单：id 由 IdWorker 预生成，显式插入 -->
+    <insert id="insertOrder" parameterType="com.example.order.domain.Order">
+        INSERT INTO orders (id, user_id, product_id, count)
+        VALUES (#{id}, #{userId}, #{productId}, #{count})
+    </insert>
+
+    <!-- 按 id 查询：create_time 由数据库默认值填充，仅读映射 -->
+    <select id="selectOrderById" resultType="com.example.order.domain.Order">
+        SELECT id, user_id, product_id, count, create_time
+        FROM orders
+        WHERE id = #{id}
+    </select>
+
+</mapper>

@@ -38,7 +38,12 @@ public class OrderMqTransactionListener implements RocketMQLocalTransactionListe
             PointAddMessage body = objectMapper.readValue((byte[]) msg.getPayload(), PointAddMessage.class);
             // 1. 本地事务：插入订单，且必须先提交（本地提交成功后才允许消费者看到消息）
             transactionTemplate.execute(status -> {
-                orderMapper.insert(new Order(body.orderId(), body.userId(), body.productId(), body.count()));
+                orderMapper.insertOrder(Order.builder()
+                        .id(body.orderId())
+                        .userId(body.userId())
+                        .productId(body.productId())
+                        .count(body.count())
+                        .build());
                 return null;
             });
             // 2. 数据库已提交 → 提交半消息
@@ -67,7 +72,7 @@ public class OrderMqTransactionListener implements RocketMQLocalTransactionListe
         // 订单在 → 本地事务其实提交成功了 → 补 COMMIT；不在 → 丢弃消息
         boolean orderExists;
         try {
-            orderExists = orderMapper.selectById(orderIdValue).isPresent();
+            orderExists = orderMapper.selectOrderById(orderIdValue).isPresent();
         } catch (Exception e) {
             // 查询异常（如 DB 抖动）时无法确认本地事务结果：返回 UNKNOWN，
             // 让 Broker 稍后再次回查，绝不能擅自 COMMIT/ROLLBACK

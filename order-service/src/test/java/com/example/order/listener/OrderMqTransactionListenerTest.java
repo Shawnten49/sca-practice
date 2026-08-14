@@ -32,7 +32,8 @@ class OrderMqTransactionListenerTest {
 
     @Test
     void checkCommitsWhenOrderExists() {
-        when(orderMapper.selectById(123L)).thenReturn(Optional.of(new Order(123L, 1L, 1L, 2)));
+        when(orderMapper.selectOrderById(123L))
+                .thenReturn(Optional.of(Order.builder().id(123L).userId(1L).productId(1L).count(2).build()));
 
         assertThat(listener.checkLocalTransaction(messageWithOrderId("123")))
                 .isEqualTo(RocketMQLocalTransactionState.COMMIT);
@@ -40,7 +41,7 @@ class OrderMqTransactionListenerTest {
 
     @Test
     void checkRollsBackWhenOrderMissing() {
-        when(orderMapper.selectById(123L)).thenReturn(Optional.empty());
+        when(orderMapper.selectOrderById(123L)).thenReturn(Optional.empty());
 
         assertThat(listener.checkLocalTransaction(messageWithOrderId("123")))
                 .isEqualTo(RocketMQLocalTransactionState.ROLLBACK);
@@ -54,7 +55,7 @@ class OrderMqTransactionListenerTest {
 
     @Test
     void checkReturnsUnknownWhenQueryFails() {
-        when(orderMapper.selectById(123L)).thenThrow(new RuntimeException("db down"));
+        when(orderMapper.selectOrderById(123L)).thenThrow(new RuntimeException("db down"));
 
         assertThat(listener.checkLocalTransaction(messageWithOrderId("123")))
                 .isEqualTo(RocketMQLocalTransactionState.UNKNOWN);

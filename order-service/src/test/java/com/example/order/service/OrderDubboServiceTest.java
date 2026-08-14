@@ -9,7 +9,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,6 +31,7 @@ class OrderDubboServiceTest {
         String result = orderDubboService.createOrder(10L, 1L, 2, false);
         assertThat(result).contains("下单成功");
 
+        verify(orderMapper, times(1)).insertOrder(any());
         verify(rocketMQTemplate).convertAndSend(eq("topic-order:pay-success"), anyString());
     }
 

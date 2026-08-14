@@ -5,7 +5,6 @@ import com.example.order.domain.Order;
 import com.example.order.mapper.OrderMapper;
 import org.apache.seata.common.util.IdWorker;
 import org.apache.seata.spring.annotation.GlobalTransactional;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -25,7 +24,12 @@ public class OrderService {
     public String createOrder(Long userId, Long productId, Integer count, boolean fail) {
         Long orderId = ID_WORKER.nextId();
         // 1) 本库插订单
-        orderMapper.insert(new Order(orderId, userId, productId, count));
+        orderMapper.insertOrder(Order.builder()
+                .id(orderId)
+                .userId(userId)
+                .productId(productId)
+                .count(count)
+                .build());
         // 2) 跨服务扣库存（XID 由 Seata 自动通过 Feign 传递）
         String stockResult = stockClient.deduct(productId, count);
 

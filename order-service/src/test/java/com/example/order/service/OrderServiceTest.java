@@ -28,11 +28,11 @@ class OrderServiceTest {
         assertThat(result).isEqualTo("下单成功：扣减成功");
 
         ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
-        verify(orderMapper).insert(captor.capture());
+        verify(orderMapper).insertOrder(captor.capture());
         Order saved = captor.getValue();
-        assertThat(saved.userId()).isEqualTo(1L);
-        assertThat(saved.productId()).isEqualTo(100L);
-        assertThat(saved.count()).isEqualTo(2);
+        assertThat(saved.getUserId()).isEqualTo(1L);
+        assertThat(saved.getProductId()).isEqualTo(100L);
+        assertThat(saved.getCount()).isEqualTo(2);
 
         verify(stockClient).deduct(100L, 2);
     }
@@ -45,7 +45,7 @@ class OrderServiceTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("模拟下单失败，触发全局回滚");
 
-        verify(orderMapper).insert(any(Order.class));
+        verify(orderMapper).insertOrder(any(Order.class));
         verify(stockClient).deduct(100L, 2);
     }
 }

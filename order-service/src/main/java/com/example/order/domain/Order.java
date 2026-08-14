@@ -1,7 +1,35 @@
 package com.example.order.domain;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+
 /**
- * 订单业务对象（只读值对象）：本地事务插入与事务消息回查时使用。
+ * 订单实体（MyBatis-Plus）。
+ * id 由 IdWorker 预生成后显式插入（IdType.INPUT），不依赖数据库自增；
+ * createTime 只读映射，不参与 insert，由数据库 DEFAULT CURRENT_TIMESTAMP 填充。
  */
-public record Order(Long orderId, Long userId, Long productId, Integer count) {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@TableName("orders")
+public class Order {
+
+    @TableId(type = IdType.INPUT)
+    private Long id;
+
+    private Long userId;
+
+    private Long productId;
+
+    private Integer count;
+
+    private LocalDateTime createTime;
 }

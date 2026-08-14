@@ -60,3 +60,11 @@ rocketmq:
   producer:
     group: order-producer
 
+mybatis-plus:
+  # 人工维护的 SQL 映射文件位置
+  mapper-locations: classpath*:mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    banner: false

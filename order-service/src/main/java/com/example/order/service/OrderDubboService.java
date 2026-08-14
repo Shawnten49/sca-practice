@@ -9,7 +9,6 @@ import org.apache.seata.common.util.IdWorker;
 import org.apache.seata.spring.annotation.GlobalTransactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -40,7 +39,12 @@ public class OrderDubboService {
     public String createOrder(Long userId, Long productId, Integer count, boolean fail) {
         Long orderId = ID_WORKER.nextId();
 
-        orderMapper.insert(new Order(orderId, userId, productId, count));
+        orderMapper.insertOrder(Order.builder()
+                .id(orderId)
+                .userId(userId)
+                .productId(productId)
+                .count(count)
+                .build());
 
         // 跨服务扣库存：这次走 Dubbo，XID 由 seata-dubbo 自动传递
         String stockResult = stockDubboService.deduct(productId, count);
