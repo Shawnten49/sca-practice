@@ -65,3 +65,11 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
   global-config:
     banner: false
+
+app:
+  points-cache:
+    redis-ttl: 5m
+    redis-ttl-jitter: 30s
+    caffeine-ttl: 30s
+    empty-ttl: 30s
+    max-delta: 100000
