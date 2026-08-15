@@ -36,6 +36,10 @@ brew services start mysql@8.4
 
 # 3. 验证（本机 root 无密码）
 /opt/homebrew/opt/mysql@8.4/bin/mysql -u root -e "SELECT VERSION();"
+
+# 4.重新启动
+brew services restart mysql@8.4
+
 ```
 
 - **注意 keg-only**：mysql@8.4 不会自动进 PATH，用完整路径或执行 `echo 'export PATH="/opt/homebrew/opt/mysql@8.4/bin:$PATH"' >> ~/.zshrc`；
