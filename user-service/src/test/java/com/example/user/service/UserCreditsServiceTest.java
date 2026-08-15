@@ -32,7 +32,7 @@ class UserCreditsServiceTest {
 
     @Test
     void getCreditsReturnsCredits() {
-        when(creditsCache.load(1L)).thenReturn(100);
+        when(creditsCache.get(1L)).thenReturn(100);
 
         CreditsVO vo = service.getCredits(1L);
 
@@ -42,7 +42,7 @@ class UserCreditsServiceTest {
 
     @Test
     void getCreditsUserNotFoundThrows404() {
-        when(creditsCache.load(99L)).thenReturn(null);
+        when(creditsCache.get(99L)).thenReturn(null);
 
         assertThatThrownBy(() -> service.getCredits(99L))
                 .isInstanceOf(BusinessException.class)
@@ -60,7 +60,7 @@ class UserCreditsServiceTest {
     @Test
     void updateCreditsIncreasesAndInvalidates() {
         when(userMapper.increaseCredits(1L, 100)).thenReturn(1);
-        when(creditsCache.load(1L)).thenReturn(200);
+        when(creditsCache.get(1L)).thenReturn(200);
 
         CreditsVO vo = service.updateCredits(1L, 100);
 
