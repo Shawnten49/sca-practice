@@ -89,8 +89,23 @@ public abstract class MultiLevelCacheTemplate<K, V> {
 
     // ==================== 固定流程（子类通常无需覆写） ====================
 
-    /** 读缓存：命中（含缓存 null）直接返回；miss 走分布式锁单飞回源。 */
+    /**
+     * 读缓存：命中（含缓存 null）直接返回；miss 直接回源并回填。
+     * 默认不走全局锁——适合绝大多数读多写少、可容忍并发回源的场景，避免分布式锁开销。
+     */
     public V get(K key) {
+        CacheGetResult<V> result = cache().GET(key);
+        if (result.isSuccess()) {
+            return result.getValue();
+        }
+        return loadAndPut(key);
+    }
+
+    /**
+     * 读缓存（带分布式锁单飞）：命中直接返回；miss 走全局锁单飞回源。
+     * 适合回源成本高、需要防击穿的场景——同一 key 集群内只有一个实例查库。
+     */
+    public V getWithMutex(K key) {
         CacheGetResult<V> result = cache().GET(key);
         if (result.isSuccess()) {
             return result.getValue();

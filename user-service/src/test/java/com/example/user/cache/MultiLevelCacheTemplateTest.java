@@ -104,22 +104,33 @@ class MultiLevelCacheTemplateTest {
     }
 
     @Test
-    void missAcquiresLockLoadsDbAndBackfills() throws InterruptedException {
+    void getMissLoadsDbWithoutLock() throws InterruptedException {
         when(cache.GET(1L)).thenReturn(miss());
-        when(lock.tryLock(anyLong(), anyLong(), any(TimeUnit.class))).thenReturn(true);
         when(loader.apply(1L)).thenReturn(80);
 
         assertThat(template.get(1L)).isEqualTo(80);
         verify(cache).put(eq(1L), eq(80));
+        // 默认 get 不走全局锁
+        verify(redissonClient, never()).getLock(anyString());
     }
 
     @Test
-    void missWithoutLockReReadsCacheAndReturns() throws InterruptedException {
+    void getWithMutexAcquiresLockLoadsDbAndBackfills() throws InterruptedException {
+        when(cache.GET(1L)).thenReturn(miss());
+        when(lock.tryLock(anyLong(), anyLong(), any(TimeUnit.class))).thenReturn(true);
+        when(loader.apply(1L)).thenReturn(80);
+
+        assertThat(template.getWithMutex(1L)).isEqualTo(80);
+        verify(cache).put(eq(1L), eq(80));
+    }
+
+    @Test
+    void getWithMutexWithoutLockReReadsCacheAndReturns() throws InterruptedException {
         when(lock.tryLock(anyLong(), anyLong(), any(TimeUnit.class))).thenReturn(false);
         // 第一次读 miss，重试后命中（其它实例已回填）
         when(cache.GET(1L)).thenReturn(miss(), hit(500));
 
-        assertThat(template.get(1L)).isEqualTo(500);
+        assertThat(template.getWithMutex(1L)).isEqualTo(500);
         verify(loader, never()).apply(anyLong());
     }
 

@@ -25,7 +25,7 @@
 抽象类 `MultiLevelCacheTemplate<K, V>`：
 
 - **泛型**：`K` 缓存 key 类型（须可被全局 `keyConvertor: jackson` 序列化，如 Long/String）；`V` 缓存值类型（须可被 `valueEncoder: java` 序列化，如 Integer/Serializable POJO）。
-- **固定流程方法**：`get(K key)`、`invalidate(K key)`，流程集中在模板内，子类通常无需覆写（为便于单测 mock，未加 `final`）。
+- **固定流程方法**：`get(K key)`（默认读，不走锁）、`getWithMutex(K key)`（分布式锁单飞）、`invalidate(K key)`，流程集中在模板内，子类通常无需覆写（为便于单测 mock，未加 `final`）。
 - **抽象方法**：`cacheName()`、`loadFromDb(K key)`，子类必须实现。
 - **可覆写钩子**：`cacheType()`、TTL、容量、锁参数，均有默认值。
 
@@ -59,10 +59,16 @@ public abstract class MultiLevelCacheTemplate<K, V> {
     protected long retrySleepMs()    { return 50; }
 
     // —— 固定流程（子类通常无需覆写） ——
-    public V get(K key) {
+    public V get(K key) {                                // 默认读：miss 直接回源，不走全局锁
         CacheGetResult<V> r = cache().GET(key);
         if (r.isSuccess()) return r.getValue();          // 命中（含缓存 null）
-        return loadWithMutex(key);                       // miss → 分布式锁单飞
+        return loadAndPut(key);
+    }
+
+    public V getWithMutex(K key) {                       // 显式加锁读：miss 走分布式锁单飞（防击穿）
+        CacheGetResult<V> r = cache().GET(key);
+        if (r.isSuccess()) return r.getValue();
+        return loadWithMutex(key);
     }
 
     public void invalidate(K key) {
@@ -127,7 +133,7 @@ public class CreditsCache extends MultiLevelCacheTemplate<Long, Integer> {
 @Override protected CacheType cacheType() { return CacheType.REMOTE; }
 ```
 
-`UserCreditsService` 用法仅把 `creditsCache.load(userId)` 改为 `creditsCache.get(userId)`（`invalidate` 不变）。
+`UserCreditsService` 用法仅把 `creditsCache.load(userId)` 改为 `creditsCache.getWithMutex(userId)`（credits 回源成本低但需要防击穿，故用加锁读；普通场景用 `get`）。
 
 ## 6. 生命周期与并发
 
@@ -148,7 +154,7 @@ public class CreditsCache extends MultiLevelCacheTemplate<Long, Integer> {
 |---|---|
 | 新增 `cache/MultiLevelCacheTemplate.java` | 抽象模板 |
 | `CreditsCache` | 改为继承模板，仅保留 `cacheName`/`loadFromDb` |
-| `UserCreditsService` | `load` → `get`（1 处） |
+| `UserCreditsService` | `load` → `getWithMutex`（1 处） |
 | 测试 | 新增 `MultiLevelCacheTemplateTest`（用假子类测固定流程）；`CreditsCacheTest` 精简为测 `cacheName`/`loadFromDb` |
 | 其它业务 | 不涉及（points 手写缓存不动） |
 

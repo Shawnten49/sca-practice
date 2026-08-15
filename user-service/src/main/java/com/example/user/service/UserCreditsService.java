@@ -26,7 +26,7 @@ public class UserCreditsService {
     /** 查询信用点；用户不存在返回 404。 */
     public CreditsVO getCredits(Long userId) {
         validateUserId(userId);
-        Integer credits = creditsCache.get(userId);
+        Integer credits = creditsCache.getWithMutex(userId);
         if (credits == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND, "用户不存在: userId=" + userId);
         }
