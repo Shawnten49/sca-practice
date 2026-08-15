@@ -100,6 +100,7 @@ public class CreditsCache {
                     .localExpire(Duration.ofSeconds(30))
                     .localLimit(10000)
                     .cacheNullValue(true)
+                    .syncLocal(true)             // 跨节点本地缓存失效广播（配合 remote.broadcastChannel）
                     .build());
 
     public Integer load(Long userId) {                       // 三级读 + 空值缓存 + 分布式锁单飞
@@ -121,7 +122,7 @@ public class CreditsCache {
 | MySQL 三级回源 | `loadWithMutex` 内 `selectUserById` |
 | 空值缓存（穿透） | `cacheNullValue=true` |
 | 热点单飞（击穿） | **Redisson 分布式锁**（跨实例单飞，见 §4.3） |
-| 写失效 | `cache.remove`（即时失效 + remote broadcast 跨节点） |
+| 写失效 | `cache.remove`（即时删本机本地 + 共享 Redis；配合 `syncLocal=true` + `remote.broadcastChannel` 广播删除其它节点本地缓存） |
 
 ### 4.3 分布式锁单飞（升级点）
 

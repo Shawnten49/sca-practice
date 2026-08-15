@@ -39,6 +39,7 @@ public class CreditsCache {
                 .localExpire(Duration.ofSeconds(30))
                 .localLimit(10000)
                 .cacheNullValue(true)
+                .syncLocal(true)
                 .build());
     }
 
