@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 
 /**
  * 用户实体（MyBatis-Plus）。
- * id 由调用方预生成（IdType.INPUT）；points 为冗余汇总字段，当前由种子数据提供。
+ * id 由调用方预生成（IdType.INPUT）；points 为积分、credits 为信用点，均为冗余汇总字段。
  */
 @Data
 @Builder
@@ -27,6 +27,8 @@ public class User {
     private String nickname;
 
     private Integer points;
+
+    private Integer credits;
 
     private LocalDateTime createTime;
 }

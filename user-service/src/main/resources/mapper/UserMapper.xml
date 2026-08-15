@@ -3,13 +3,19 @@
 <mapper namespace="com.example.user.mapper.UserMapper">
 
     <select id="selectUserById" resultType="com.example.user.domain.User">
-        SELECT id, nickname, points, create_time
+        SELECT id, nickname, points, credits, create_time
         FROM users
         WHERE id = #{id}
     </select>
 
     <update id="increasePoints">
         UPDATE users SET points = points + #{points} WHERE id = #{userId}
+    </update>
+
+    <update id="increaseCredits">
+        UPDATE users SET credits = credits + #{delta}
+        WHERE id = #{userId}
+          AND credits + #{delta} &gt;= 0
     </update>
 
 </mapper>

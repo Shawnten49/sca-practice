@@ -74,3 +74,24 @@ app:
     empty-ttl: 30s
     max-delta: 100000
     double-delete-delay: 500ms
+  credits:
+    max-delta: 100000
+
+jetcache:
+  statIntervalMinutes: 15
+  areaInCacheName: false
+  local:
+    default:
+      type: caffeine
+      keyConvertor: jackson
+      limit: 10000
+      expireAfterWriteInMillis: 30000
+  remote:
+    default:
+      type: redis.lettuce
+      keyConvertor: jackson
+      broadcastChannel: default
+      valueEncoder: java
+      valueDecoder: java
+      uri: redis://127.0.0.1:6379/
+      expireAfterWriteInMillis: 300000

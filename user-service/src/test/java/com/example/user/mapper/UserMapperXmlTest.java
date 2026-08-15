@@ -44,6 +44,7 @@ class UserMapperXmlTest {
                     "id BIGINT PRIMARY KEY," +
                     "nickname VARCHAR(64) NOT NULL," +
                     "points INT NOT NULL DEFAULT 0," +
+                    "credits INT NOT NULL DEFAULT 0 CHECK (credits >= 0)," +
                     "create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)");
             st.execute("CREATE TABLE user_points (" +
                     "id BIGINT AUTO_INCREMENT PRIMARY KEY," +
@@ -87,6 +88,7 @@ class UserMapperXmlTest {
         assertThat(found.get().getId()).isEqualTo(1L);
         assertThat(found.get().getNickname()).isEqualTo("demo");
         assertThat(found.get().getPoints()).isEqualTo(100);
+        assertThat(found.get().getCredits()).isEqualTo(0);   // 未设置时取列默认值
         assertThat(found.get().getCreateTime()).isNotNull();
     }
 
@@ -121,6 +123,31 @@ class UserMapperXmlTest {
         Optional<User> found = userMapper.selectUserById(1L);
         assertThat(found).isPresent();
         assertThat(found.get().getPoints()).isEqualTo(150);
+    }
+
+    @Test
+    void increaseCreditsAccumulatesUserCredits() {
+        userMapper.insert(User.builder().id(1L).nickname("demo").credits(50).build());
+
+        int updated = userMapper.increaseCredits(1L, 30);
+        assertThat(updated).isEqualTo(1);
+
+        Optional<User> found = userMapper.selectUserById(1L);
+        assertThat(found).isPresent();
+        assertThat(found.get().getCredits()).isEqualTo(80);
+    }
+
+    @Test
+    void increaseCreditsRejectsNegativeResult() {
+        userMapper.insert(User.builder().id(1L).nickname("demo").credits(50).build());
+
+        // 扣减到负数：WHERE credits + delta >= 0 不命中，返回 0
+        int updated = userMapper.increaseCredits(1L, -100);
+        assertThat(updated).isZero();
+
+        Optional<User> found = userMapper.selectUserById(1L);
+        assertThat(found).isPresent();
+        assertThat(found.get().getCredits()).isEqualTo(50);   // 值未变
     }
 
     @Test

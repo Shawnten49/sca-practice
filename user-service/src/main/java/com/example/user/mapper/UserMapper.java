@@ -20,4 +20,7 @@ public interface UserMapper extends BaseMapper<User> {
 
     /** 累加用户积分：points = points + #{points}，SQL 见 UserMapper.xml */
     int increasePoints(@Param("userId") Long userId, @Param("points") Integer points);
+
+    /** 累加用户信用点（非负守卫）：credits = credits + #{delta}，扣成负返回 0，SQL 见 UserMapper.xml */
+    int increaseCredits(@Param("userId") Long userId, @Param("delta") Integer delta);
 }
