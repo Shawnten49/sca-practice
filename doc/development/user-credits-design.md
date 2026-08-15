@@ -92,17 +92,23 @@ jetcache:
 ```java
 @Component
 public class CreditsCache {
-    @Cached(name = "user:credits", key = "#userId",
-            cacheType = CacheType.BOTH,
-            expire = 300, localExpire = 30, localLimit = 10000,
-            cacheNullValue = true)
-    @CachePenetrationProtect
-    public Integer load(Long userId) {                       // 三级读 + 空值缓存 + 单飞
-        return userMapper.selectUserById(userId).map(User::getCredits).orElse(null);
+    // 程序化创建 Cache（JetCache 三级：Caffeine → Redis → MySQL）
+    private final Cache<Long, Integer> cache = cacheManager.getOrCreateCache(
+            QuickConfig.newBuilder("user:credits")
+                    .cacheType(CacheType.BOTH)
+                    .expire(Duration.ofSeconds(300))
+                    .localExpire(Duration.ofSeconds(30))
+                    .localLimit(10000)
+                    .cacheNullValue(true)
+                    .build());
+
+    public Integer load(Long userId) {                       // 三级读 + 空值缓存 + 分布式锁单飞
+        CacheGetResult<Integer> r = cache.GET(userId);
+        if (r.isSuccess()) return r.getValue();              // 命中（含缓存 null）
+        return loadWithMutex(userId);                        // miss → Redisson 锁单飞回源
     }
 
-    @CacheInvalidate(name = "user:credits", key = "#userId")
-    public void invalidate(Long userId) { }                  // 即时失效 + 跨节点广播
+    public void invalidate(Long userId) { cache.remove(userId); }
 }
 ```
 
@@ -112,10 +118,28 @@ public class CreditsCache {
 |---|---|
 | Caffeine 本地一级 | `cacheType=BOTH` + `localExpire=30` |
 | Redis 二级 | `expire=300` |
-| MySQL 三级回源 | `load` 内 `selectUserById` |
+| MySQL 三级回源 | `loadWithMutex` 内 `selectUserById` |
 | 空值缓存（穿透） | `cacheNullValue=true` |
-| 热点单飞（击穿） | `@CachePenetrationProtect` |
-| 写失效 | `@CacheInvalidate` |
+| 热点单飞（击穿） | **Redisson 分布式锁**（跨实例单飞，见 §4.3） |
+| 写失效 | `cache.remove`（即时失效 + remote broadcast 跨节点） |
+
+### 4.3 分布式锁单飞（升级点）
+
+`@CachePenetrationProtect` 只是 JVM 内单飞，集群下每个实例仍各有一个线程查库。本设计升级为 **Redisson 分布式锁单飞**（与 points 的 `loadWithMutex` 一致）：
+
+```text
+loadWithMutex(userId):
+  lock = redisson.getLock("user:credits:lock:" + userId)
+  if lock.tryLock(0, 10s):                      // 拿到锁：负责回源
+      double-check cache.GET(userId) → 命中则返回
+      loadFromDb(userId)                        // 查库 + cache.put 回填
+  else:                                         // 没拿到锁
+      sleep 50ms → 重读 cache.GET(userId) → 命中则返回
+      loadFromDb(userId)                        // 兜底直查（保证可用性）
+```
+
+- 拿锁线程负责回源并回填；等待线程 50ms 后重读缓存，多数情况命中回填后的 Redis，避免打库。
+- 极端下（回源超过等待窗口）等待线程兜底直查 DB，保证可用性（与 points 语义一致）。
 
 ## 5. 业务层设计
 
