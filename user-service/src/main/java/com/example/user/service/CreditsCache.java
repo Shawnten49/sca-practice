@@ -39,7 +39,10 @@ public class CreditsCache {
                 .localExpire(Duration.ofSeconds(30))
                 .localLimit(10000)
                 .cacheNullValue(true)
-                .syncLocal(true)
+                // 关闭跨节点本地缓存广播：写频繁时每个 key 会向所有节点广播失效消息，
+                // 且回源回填的 put 也会广播，易形成"广播风暴"压 Redis。
+                // credits 读多写少、可接受本地 30s 最终一致，靠本地 TTL 兜底即可。
+                .syncLocal(false)
                 .build());
     }
 
