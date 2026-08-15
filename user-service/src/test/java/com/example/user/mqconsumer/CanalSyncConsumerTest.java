@@ -1,6 +1,7 @@
 package com.example.user.mqconsumer;
 
 import com.example.user.mqconsumer.canal.CanalMessage;
+import com.example.user.mqconsumer.canal.IdempotencyFacade;
 import com.example.user.mqconsumer.canal.OrderHandler;
 import com.example.user.mqconsumer.canal.TableSyncHandler;
 import com.example.user.mqconsumer.canal.UserHandler;
@@ -42,8 +43,16 @@ class CanalSyncConsumerTest {
             {"database":"seata_user","table":"users","isDdl":true,"type":"ALTER","sql":"ALTER TABLE users ADD COLUMN x INT"}
             """;
 
+    private static final String ORDER_ITEMS_JSON = """
+            {"data":[{"id":"9","order_id":"4","product_id":"1"}],"database":"seata_order",
+             "isDdl":false,"pkNames":["id"],"table":"order_items","type":"INSERT",
+             "logFileName":"mysql-bin.000003","logFileOffset":999}
+            """;
+
     private final CanalSyncConsumer consumerWithRealHandlers =
-            new CanalSyncConsumer(new ObjectMapper(), List.of(new UserHandler(), new OrderHandler()));
+            new CanalSyncConsumer(new ObjectMapper(),
+                    List.of(new UserHandler(), new OrderHandler()),
+                    mock(IdempotencyFacade.class));
 
     @Test
     void routesUserTableEventToUserHandler(CapturedOutput output) {
@@ -85,12 +94,29 @@ class CanalSyncConsumerTest {
         TableSyncHandler user = mock(TableSyncHandler.class);
         TableSyncHandler order = mock(TableSyncHandler.class);
         when(user.supportedKey()).thenReturn("seata_user.users");
+        when(user.idempotent()).thenReturn(true);
         when(order.supportedKey()).thenReturn("seata_order.orders");
-        CanalSyncConsumer consumer = new CanalSyncConsumer(new ObjectMapper(), List.of(user, order));
+        CanalSyncConsumer consumer = new CanalSyncConsumer(new ObjectMapper(),
+                List.of(user, order), mock(IdempotencyFacade.class));
 
         consumer.onMessage(USER_INSERT_JSON);
 
         verify(user).handle(any(CanalMessage.class));
         verify(order, never()).handle(any());
+    }
+
+    @Test
+    void nonIdempotentHandlerGoesThroughDedupFacade() {
+        TableSyncHandler orderItems = mock(TableSyncHandler.class);
+        when(orderItems.supportedKey()).thenReturn("seata_order.order_items");
+        when(orderItems.idempotent()).thenReturn(false);
+        IdempotencyFacade facade = mock(IdempotencyFacade.class);
+        CanalSyncConsumer consumer = new CanalSyncConsumer(new ObjectMapper(),
+                List.of(orderItems), facade);
+
+        consumer.onMessage(ORDER_ITEMS_JSON);
+
+        verify(facade).executeWithDedup(any(CanalMessage.class), any(Runnable.class));
+        verify(orderItems, never()).handle(any());
     }
 }

@@ -1,6 +1,7 @@
 package com.example.user.mqconsumer;
 
 import com.example.user.mqconsumer.canal.CanalMessage;
+import com.example.user.mqconsumer.canal.IdempotencyFacade;
 import com.example.user.mqconsumer.canal.TableSyncHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -28,9 +29,13 @@ public class CanalSyncConsumer implements RocketMQListener<String> {
 
     private final ObjectMapper objectMapper;
     private final Map<String, TableSyncHandler> handlers;
+    private final IdempotencyFacade idempotencyFacade;
 
-    public CanalSyncConsumer(ObjectMapper objectMapper, List<TableSyncHandler> handlerList) {
+    public CanalSyncConsumer(ObjectMapper objectMapper,
+                             List<TableSyncHandler> handlerList,
+                             IdempotencyFacade idempotencyFacade) {
         this.objectMapper = objectMapper;
+        this.idempotencyFacade = idempotencyFacade;
         // 路由表由 Spring 收集的 Handler Bean 自动组装：新增表监听只需加一个 Handler
         this.handlers = handlerList.stream()
                 .collect(Collectors.toMap(TableSyncHandler::supportedKey, Function.identity()));
@@ -56,6 +61,12 @@ public class CanalSyncConsumer implements RocketMQListener<String> {
             log.info("未注册的表变更事件，跳过: {}", message.routeKey());
             return;
         }
-        handler.handle(message);
+        if (handler.idempotent()) {
+            // 天然幂等（删缓存 / upsert / 日志）：直接执行，零额外开销
+            handler.handle(message);
+        } else {
+            // 非幂等操作：幂等门面按 binlog 位点去重（去重记录与业务同事务）
+            idempotencyFacade.executeWithDedup(message, () -> handler.handle(message));
+        }
     }
 }

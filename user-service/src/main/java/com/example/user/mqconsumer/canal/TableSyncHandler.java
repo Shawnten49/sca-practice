@@ -9,6 +9,14 @@ public interface TableSyncHandler {
     String supportedKey();
 
     /**
+     * 是否天然幂等（删缓存 / upsert / 日志类）：默认 true，Consumer 直接执行、不去重；
+     * 非幂等操作（累加、发通知等）覆盖为 false，Consumer 会走幂等门面按 binlog 位点去重。
+     */
+    default boolean idempotent() {
+        return true;
+    }
+
+    /**
      * 处理一条 binlog 变更事件。
      * 实现需保证幂等（Canal + MQ 为 at-least-once）；
      * 抛异常会让 RocketMQ 重试该消息。
