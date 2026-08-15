@@ -83,7 +83,12 @@ redis-cli ping    # 返回 PONG
 ## 6. RocketMQ 5.5.0（NameServer + Broker）
 
 ```bash
-# 1. 下载解压到 ~/tools/rocketmq-5.5.0
+# 1. 下载（Apache 归档站；官方下载页 https://rocketmq.apache.org/download/ 有各版本入口）
+cd ~/tools
+curl -L -o rocketmq-all-5.5.0-bin-release.zip \
+  https://archive.apache.org/dist/rocketmq/5.5.0/rocketmq-all-5.5.0-bin-release.zip
+unzip rocketmq-all-5.5.0-bin-release.zip && mv rocketmq-all-5.5.0 ~/tools/rocketmq-5.5.0
+
 # 2. 启动（推荐用项目脚本，自动等端口就绪）
 bash scripts/start-rocketmq.sh
 
@@ -99,11 +104,16 @@ bash scripts/start-rocketmq.sh
 ## 7. RocketMQ Dashboard 2.1.0（管理后台）
 
 ```bash
-# 需要先编译（arm64 机器注意 node 二进制 Bad CPU type 问题，见下方要点）
-cd ~/tools/rocketmq-dashboard
+# 1. 获取源码（GitHub 仓库 apache/rocketmq-dashboard，切 2.1.0 tag）
+cd ~/tools
+git clone https://github.com/apache/rocketmq-dashboard.git
+cd rocketmq-dashboard
+git checkout rocketmq-dashboard-2.1.0
+
+# 2. 编译（arm64 机器注意 node 二进制 Bad CPU type 问题，见下方要点）
 mvn clean package -Dmaven.test.skip=true
 
-# 启动（推荐用项目脚本）
+# 3. 启动（推荐用项目脚本）
 bash scripts/start-rocketmq-dashboard.sh
 # 访问 http://127.0.0.1:7070 查看 Topic / 消费积压 / 集群列表
 ```
@@ -133,13 +143,24 @@ bash scripts/start-sentinel.sh
 ## 9. Seata Server 2.6.0（分布式事务 TC）
 
 ```bash
-# 安装目录
-~/tools/seata/apache-seata-2.6.0-incubating-bin/seata-server
+# 1. 下载安装包（Apache 归档库，官方存放历史版本的最稳定站点）
+mkdir -p ~/tools/seata && cd ~/tools/seata
+curl -L -o apache-seata-2.6.0-incubating-bin.tar.gz \
+  https://archive.apache.org/dist/incubator/seata/2.6.0/apache-seata-2.6.0-incubating-bin.tar.gz
+tar xzf apache-seata-2.6.0-incubating-bin.tar.gz
 
-# 启动（推荐用项目脚本；已运行会先重启）
+# 2. 放入 MySQL 驱动（官方包 lib 目录不带驱动，需手动下载）
+cd apache-seata-2.6.0-incubating-bin/seata-server
+curl -L -o lib/mysql-connector-j-8.4.0.jar \
+  https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/8.4.0/mysql-connector-j-8.4.0.jar
+
+# 3. 初始化 MySQL（建 seata 库 + 四张表，建表脚本见源码 script/server/db/mysql.sql）
+mysql -u root -e "CREATE DATABASE IF NOT EXISTS seata DEFAULT CHARACTER SET utf8mb4;"
+
+# 4. 启动（推荐用项目脚本；已运行会先重启）
 bash scripts/start-seata-server.sh
 
-# 验证：8091 监听 + Nacos 服务列表出现 seata-server 实例
+# 5. 验证：8091 监听 + Nacos 服务列表出现 seata-server 实例
 ```
 
 - 端口：**8091**；注册中心/配置中心都用 Nacos（配置 dataId `seataServer.properties`，DEFAULT_GROUP）；
