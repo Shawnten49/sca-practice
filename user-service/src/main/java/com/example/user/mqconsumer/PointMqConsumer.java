@@ -4,6 +4,7 @@ import com.example.dto.PointAddMessage;
 import com.example.user.domain.UserPoints;
 import com.example.user.mapper.UserMapper;
 import com.example.user.mapper.UserPointsMapper;
+import com.example.user.service.UserPointsService;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.slf4j.Logger;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 @RocketMQMessageListener(topic = "topic-point", consumerGroup = "point-consumer")
@@ -33,14 +35,18 @@ public class PointMqConsumer implements RocketMQListener<PointAddMessage> {
 
     private final TransactionTemplate transactionTemplate;
 
+    private final UserPointsService userPointsService;
+
     public PointMqConsumer(StringRedisTemplate redisTemplate,
                            UserPointsMapper userPointsMapper,
                            UserMapper userMapper,
-                           TransactionTemplate transactionTemplate) {
+                           TransactionTemplate transactionTemplate,
+                           UserPointsService userPointsService) {
         this.redisTemplate = redisTemplate;
         this.userPointsMapper = userPointsMapper;
         this.userMapper = userMapper;
         this.transactionTemplate = transactionTemplate;
+        this.userPointsService = userPointsService;
     }
 
     @Override
@@ -71,6 +77,7 @@ public class PointMqConsumer implements RocketMQListener<PointAddMessage> {
      * 只有真正插入成功（返回 1）才累加 users.points，避免重复加分。
      */
     void addPoints(PointAddMessage msg) {
+        AtomicBoolean added = new AtomicBoolean(false);
         transactionTemplate.executeWithoutResult(status -> {
             int inserted = userPointsMapper.insertUserPoints(UserPoints.builder()
                     .userId(msg.userId())
@@ -84,6 +91,11 @@ public class PointMqConsumer implements RocketMQListener<PointAddMessage> {
             }
             userMapper.increasePoints(msg.userId(), msg.points());
             log.info("给用户 {} 加 {} 积分（来自订单 {}）", msg.userId(), msg.points(), msg.orderId());
+            added.set(true);
         });
+        // 事务提交后再失效缓存，避免回滚时缓存已回填错误值；也防止读到加积分前的旧缓存
+        if (added.get()) {
+            userPointsService.invalidatePoints(msg.userId());
+        }
     }
 }

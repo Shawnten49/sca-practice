@@ -73,3 +73,4 @@ app:
     caffeine-ttl: 30s
     empty-ttl: 30s
     max-delta: 100000
+    double-delete-delay: 500ms

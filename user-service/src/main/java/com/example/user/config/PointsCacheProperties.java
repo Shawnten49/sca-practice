@@ -23,6 +23,9 @@ public class PointsCacheProperties {
     /** 单次增量上限（防误操作） */
     private int maxDelta = 100000;
 
+    /** 延迟双删的延时（写后延迟删缓存，缩小 Cache-Aside 竞态窗口） */
+    private Duration doubleDeleteDelay = Duration.ofMillis(500);
+
     public Duration getRedisTtl() {
         return redisTtl;
     }
@@ -61,5 +64,13 @@ public class PointsCacheProperties {
 
     public void setMaxDelta(int maxDelta) {
         this.maxDelta = maxDelta;
+    }
+
+    public Duration getDoubleDeleteDelay() {
+        return doubleDeleteDelay;
+    }
+
+    public void setDoubleDeleteDelay(Duration doubleDeleteDelay) {
+        this.doubleDeleteDelay = doubleDeleteDelay;
     }
 }

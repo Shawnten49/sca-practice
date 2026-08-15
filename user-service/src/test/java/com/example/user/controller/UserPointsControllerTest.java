@@ -44,6 +44,10 @@ class UserPointsControllerTest {
 
     @Test
     void getPointsRejectsInvalidUserId() throws Exception {
+        // 校验已下沉到 service：service 抛 IllegalArgumentException 时，全局异常处理器应返回 400
+        when(userPointsService.getPoints(0L))
+                .thenThrow(new IllegalArgumentException("userId 必须是正整数"));
+
         mockMvc.perform(get("/user/points").param("userId", "0"))
                 .andExpect(status().isBadRequest());
     }

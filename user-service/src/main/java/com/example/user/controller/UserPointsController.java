@@ -3,13 +3,18 @@ package com.example.user.controller;
 import com.example.common.Result;
 import com.example.user.dto.PointsVO;
 import com.example.user.service.UserPointsService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/** 用户积分查询/更新接口（沿用项目简单风格）。 */
+/** 用户积分查询/调整接口。参数校验下沉到 service，controller 保持薄。 */
+@Tag(name = "用户积分", description = "积分查询与调整")
 @RestController
+@RequestMapping("/user/points")
 public class UserPointsController {
 
     private final UserPointsService userPointsService;
@@ -18,21 +23,15 @@ public class UserPointsController {
         this.userPointsService = userPointsService;
     }
 
-    @GetMapping("/user/points")
+    @GetMapping
+    @Operation(summary = "查询用户积分")
     public Result<PointsVO> points(@RequestParam Long userId) {
-        validateUserId(userId);
         return Result.ok(userPointsService.getPoints(userId));
     }
 
-    @PostMapping("/user/points/update")
+    @PostMapping("/update")
+    @Operation(summary = "调整用户积分（可为负）")
     public Result<PointsVO> update(@RequestParam Long userId, @RequestParam Integer delta) {
-        validateUserId(userId);
         return Result.ok(userPointsService.updatePoints(userId, delta));
-    }
-
-    private void validateUserId(Long userId) {
-        if (userId == null || userId <= 0) {
-            throw new IllegalArgumentException("userId 必须是正整数");
-        }
     }
 }

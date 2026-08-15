@@ -4,6 +4,7 @@ import com.example.dto.PointAddMessage;
 import com.example.user.domain.UserPoints;
 import com.example.user.mapper.UserMapper;
 import com.example.user.mapper.UserPointsMapper;
+import com.example.user.service.UserPointsService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -36,8 +37,9 @@ class PointMqConsumerTest {
     private final UserPointsMapper userPointsMapper = mock(UserPointsMapper.class);
     private final UserMapper userMapper = mock(UserMapper.class);
     private final TransactionTemplate transactionTemplate = mock(TransactionTemplate.class);
+    private final UserPointsService userPointsService = mock(UserPointsService.class);
     private final PointMqConsumer consumer = spy(
-            new PointMqConsumer(redisTemplate, userPointsMapper, userMapper, transactionTemplate));
+            new PointMqConsumer(redisTemplate, userPointsMapper, userMapper, transactionTemplate, userPointsService));
 
     private final PointAddMessage message = new PointAddMessage(123L, 1L, 1L, 2, 200);
 
@@ -106,6 +108,7 @@ class PointMqConsumerTest {
         assertThat(record.getPoints()).isEqualTo(200);
 
         verify(userMapper).increasePoints(1L, 200);
+        verify(userPointsService).invalidatePoints(1L);
     }
 
     @Test
@@ -118,6 +121,7 @@ class PointMqConsumerTest {
 
         verify(userPointsMapper).insertUserPoints(any(UserPoints.class));
         verify(userMapper, never()).increasePoints(anyLong(), anyInt());
+        verify(userPointsService, never()).invalidatePoints(anyLong());
     }
 
     @Test
