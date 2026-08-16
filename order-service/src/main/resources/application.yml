@@ -61,9 +61,16 @@ rocketmq:
     group: order-producer
 
 leaf:
+  mode: http            # http（默认，独立 Leaf 服务）| local（本地 SDK，leaf-core）
   url: http://127.0.0.1:8085
   connect-timeout: 2s
   read-timeout: 3s
+  local:
+    jdbc-url: jdbc:mysql://127.0.0.1:3306/leaf?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: ""
+    zk-address: 127.0.0.1:2181
+    port: 8083
 
 mybatis-plus:
   # 人工维护的 SQL 映射文件位置

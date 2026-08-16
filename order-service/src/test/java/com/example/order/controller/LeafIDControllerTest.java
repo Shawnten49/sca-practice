@@ -1,7 +1,7 @@
 package com.example.order.controller;
 
 import com.example.common.GlobalExceptionHandler;
-import com.example.order.client.LeafIdClient;
+import com.example.order.client.LeafIdGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -17,12 +17,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class LeafIDControllerTest {
 
     private MockMvc mockMvc;
-    private LeafIdClient leafIdClient;
+    private LeafIdGenerator leafIdGenerator;
 
     @BeforeEach
     void setUp() {
-        leafIdClient = mock(LeafIdClient.class);
-        mockMvc = MockMvcBuilders.standaloneSetup(new LeafIDController(leafIdClient))
+        leafIdGenerator = mock(LeafIdGenerator.class);
+        mockMvc = MockMvcBuilders.standaloneSetup(new LeafIDController(leafIdGenerator))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .setMessageConverters(new MappingJackson2HttpMessageConverter())
                 .build();
@@ -30,7 +30,7 @@ class LeafIDControllerTest {
 
     @Test
     void segment_usesDefaultKeyAndReturnsResult() throws Exception {
-        when(leafIdClient.segmentId("order_id")).thenReturn(1001L);
+        when(leafIdGenerator.segmentId("order_id")).thenReturn(1001L);
 
         mockMvc.perform(get("/leaf/segment"))
                 .andExpect(status().isOk())
@@ -41,7 +41,7 @@ class LeafIDControllerTest {
 
     @Test
     void segment_withCustomKey() throws Exception {
-        when(leafIdClient.segmentId("user_id")).thenReturn(2001L);
+        when(leafIdGenerator.segmentId("user_id")).thenReturn(2001L);
 
         mockMvc.perform(get("/leaf/segment").param("key", "user_id"))
                 .andExpect(status().isOk())
@@ -50,7 +50,7 @@ class LeafIDControllerTest {
 
     @Test
     void snowflake_usesDefaultKeyAndReturnsResult() throws Exception {
-        when(leafIdClient.snowflakeId("leaf")).thenReturn(2089026014645583910L);
+        when(leafIdGenerator.snowflakeId("leaf")).thenReturn(2089026014645583910L);
 
         mockMvc.perform(get("/leaf/snowflake"))
                 .andExpect(status().isOk())

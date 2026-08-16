@@ -11,6 +11,28 @@
 
     <artifactId>order-service</artifactId>
 
+    <dependencyManagement>
+        <dependencies>
+            <!-- 父 BOM（dubbo 等）把 curator 管理成 5.8.0，与 leaf-core 的 curator 2.x API 不兼容；
+                 本模块统一钉回 2.13.0（leaf-core 雪花模式需要 creatingParentsIfNeeded 等 2.x 方法） -->
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-recipes</artifactId>
+                <version>2.13.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-framework</artifactId>
+                <version>2.13.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-client</artifactId>
+                <version>2.13.0</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -68,6 +90,42 @@
         <dependency>
             <groupId>com.example</groupId>
             <artifactId>sca-common</artifactId>
+        </dependency>
+        <!-- 美团 Leaf 本地 SDK：号段/雪花两种模式共用（HTTP 模式仅用 LeafIdClient 直连服务） -->
+        <dependency>
+            <groupId>com.sankuai.inf.leaf</groupId>
+            <artifactId>leaf-core</artifactId>
+            <version>1.0.1</version>
+            <exclusions>
+                <!-- 旧版 mybatis(3.3.0) 与项目 mybatis-plus 3.5.x 冲突，统一用项目版本 -->
+                <exclusion>
+                    <groupId>org.mybatis</groupId>
+                    <artifactId>mybatis</artifactId>
+                </exclusion>
+                <!-- 旧版 mysql 驱动(5.1.38) 与 MySQL 8 不兼容 -->
+                <exclusion>
+                    <groupId>mysql</groupId>
+                    <artifactId>mysql-connector-java</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- leaf-core 将 curator 标为 provided，使用方需显式引入（雪花模式连 ZooKeeper） -->
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-recipes</artifactId>
+            <version>2.13.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.zookeeper</groupId>
+            <artifactId>zookeeper</artifactId>
+            <version>3.7.2</version>
+            <exclusions>
+                <!-- 避免引入 log4j 1.x 绑定，统一用 logback -->
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-reload4j</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.rocketmq</groupId>
