@@ -44,7 +44,7 @@ class CanalEventConverterTest {
         CanalEntry.Entry entry = rowEntry("seata_user", "users", CanalEntry.EventType.UPDATE,
                 "mysql-bin.000001", 2345L,
                 List.of(row(List.of(col("id", "3", true), col("points", "100", false)),
-                        List.of(col("id", "3", true), col("points", "200", false)))));
+                        List.of(col("id", "3", true), col("points", "200", false, true)))));
 
         List<CanalEvent> events = converter.toEvents(message(42L, entry));
 
@@ -53,8 +53,31 @@ class CanalEventConverterTest {
         assertThat(m.type()).isEqualTo("UPDATE");
         assertThat(m.data().get(0)).containsEntry("points", "200");
         assertThat(m.old()).hasSize(1);
+        // old 只保留 updated=true 的列（points 变更了才会出现在 old 中）
         assertThat(m.old().get(0)).containsEntry("points", "100");
+        assertThat(m.old().get(0)).hasSize(1);
         assertThat(events.get(0).rowKey()).isEqualTo("3");
+    }
+
+    @Test
+    void updateOldOnlyContainsChangedColumns() throws Exception {
+        // 只改了 nickname，points 未变：old 中不应出现 points
+        CanalEntry.Entry entry = rowEntry("seata_user", "users", CanalEntry.EventType.UPDATE,
+                "mysql-bin.000001", 2500L,
+                List.of(row(
+                        List.of(col("id", "3", true),
+                                col("points", "100", false),
+                                col("nickname", "old-name", false)),
+                        List.of(col("id", "3", true),
+                                col("points", "100", false),
+                                col("nickname", "new-name", false, true)))));
+
+        List<CanalEvent> events = converter.toEvents(message(42L, entry));
+
+        CanalMessage m = events.get(0).message();
+        assertThat(m.old()).hasSize(1);
+        assertThat(m.old().get(0)).containsEntry("nickname", "old-name");
+        assertThat(m.old().get(0)).doesNotContainKey("points");
     }
 
     @Test

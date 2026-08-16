@@ -16,7 +16,8 @@ import java.util.Map;
  * <ul>
  *   <li>只处理 ROWDATA 条目；TRANSACTIONBEGIN/TRANSACTIONEND 直接忽略；</li>
  *   <li>一条 ROWDATA 条目可能携带多行 RowData，逐行拆成独立事件（每行一个位点 + 行级 key）；</li>
- *   <li>data/old 语义与 Canal flatMessage 对齐：INSERT data=新值；UPDATE data=新值 old=旧值；
+ *   <li>data/old 语义与 Canal flatMessage 对齐：INSERT data=新值；UPDATE data=新值
+ *       old=变更前的列（按 after 列的 updated 标记/前后值比较判定，只含真正变更的列）；
  *       DELETE data=旧值（被删行）；</li>
  *   <li>行级去重键优先用主键值拼接（多行 SQL 共享位点时靠它区分），无主键退化为消息内行号。</li>
  * </ul>
@@ -61,7 +62,7 @@ public class CanalEventConverter {
         };
         Map<String, Object> dataMap = toMap(dataColumns);
         Map<String, Object> oldMap = switch (eventType) {
-            case UPDATE -> toMap(before);
+            case UPDATE -> toChangedMap(before, after);
             default -> null;
         };
 
@@ -123,5 +124,32 @@ public class CanalEventConverter {
             map.put(column.getName(), column.getIsNull() ? null : column.getValue());
         }
         return map;
+    }
+
+    /**
+     * UPDATE 的变更前镜像：只保留真正变更的列（与 Canal flatMessage 的 old 语义一致，
+     * 消费端可以据此判断某个字段是否真的发生了变化）。
+     *
+     * <p>注意：Canal 将 updated=true 标记在 after 列上（而非 before 列），
+     * 因此这里按列名匹配 after 列，取 updated 标记，并叠加 before/after 值比较兜底。
+     */
+    private Map<String, Object> toChangedMap(List<CanalEntry.Column> before,
+                                             List<CanalEntry.Column> after) {
+        Map<String, CanalEntry.Column> afterByName = new java.util.HashMap<>();
+        for (CanalEntry.Column column : after) {
+            afterByName.put(column.getName(), column);
+        }
+        Map<String, Object> map = new LinkedHashMap<>();
+        for (CanalEntry.Column beforeColumn : before) {
+            CanalEntry.Column afterColumn = afterByName.get(beforeColumn.getName());
+            boolean changed = afterColumn != null
+                    && (afterColumn.getUpdated()
+                    || afterColumn.getIsNull() != beforeColumn.getIsNull()
+                    || !java.util.Objects.equals(afterColumn.getValue(), beforeColumn.getValue()));
+            if (changed) {
+                map.put(beforeColumn.getName(), beforeColumn.getIsNull() ? null : beforeColumn.getValue());
+            }
+        }
+        return map.isEmpty() ? null : map;
     }
 }

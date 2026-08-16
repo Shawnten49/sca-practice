@@ -81,6 +81,10 @@ public class CanalSyncConsumer implements RocketMQListener<MessageExt> {
             log.info("未注册的表变更事件，跳过: {}", message.routeKey());
             return;
         }
+        if (!handler.shouldHandle(message)) {
+            log.info("字段未变更，跳过: {}", message.routeKey());
+            return;
+        }
         if (handler.idempotent()) {
             // 天然幂等（删缓存 / upsert / 日志）：直接执行，零额外开销
             handler.handle(message);

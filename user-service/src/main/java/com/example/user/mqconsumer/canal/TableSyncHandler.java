@@ -17,6 +17,15 @@ public interface TableSyncHandler {
     }
 
     /**
+     * 字段级变更过滤：默认全部处理；只关心某些字段变更的 Handler 覆盖此方法
+     * （例如只关心 users.points 变化）。返回 false 时 Consumer 直接跳过，
+     * 不进入幂等门面、不写 sync_log。
+     */
+    default boolean shouldHandle(CanalMessage message) {
+        return true;
+    }
+
+    /**
      * 处理一条 binlog 变更事件。
      * 实现需保证幂等（Canal + MQ 为 at-least-once）；
      * 抛异常会让 RocketMQ 重试该消息。

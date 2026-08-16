@@ -88,10 +88,15 @@ public final class CanalTestMessages {
     }
 
     public static CanalEntry.Column col(String name, String value, boolean key) {
+        return col(name, value, key, false);
+    }
+
+    public static CanalEntry.Column col(String name, String value, boolean key, boolean updated) {
         return CanalEntry.Column.newBuilder()
                 .setName(name)
                 .setValue(value)
                 .setIsKey(key)
+                .setUpdated(updated)
                 .build();
     }
 }

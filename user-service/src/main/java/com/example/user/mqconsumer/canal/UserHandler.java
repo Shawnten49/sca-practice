@@ -10,6 +10,12 @@ public class UserHandler implements TableSyncHandler {
 
     static final String KEY = "seata_user.users";
 
+    private final FieldChangeFilter fieldChangeFilter;
+
+    public UserHandler(FieldChangeFilter fieldChangeFilter) {
+        this.fieldChangeFilter = fieldChangeFilter;
+    }
+
     @Override
     public String supportedKey() {
         return KEY;
@@ -18,6 +24,12 @@ public class UserHandler implements TableSyncHandler {
     @Override
     public boolean idempotent() {
         return false;
+    }
+
+    /** 只处理 points 字段发生变更的事件（INSERT 视为新行需要处理）。 */
+    @Override
+    public boolean shouldHandle(CanalMessage message) {
+        return fieldChangeFilter.fieldChanged(message, "points");
     }
 
     @Override

@@ -4,6 +4,7 @@ import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.example.user.mqconsumer.canal.CanalEventConverter;
 import com.example.user.mqconsumer.canal.CanalPacketParser;
 import com.example.user.mqconsumer.canal.CanalTestMessages;
+import com.example.user.mqconsumer.canal.FieldChangeFilter;
 import com.example.user.mqconsumer.canal.IdempotencyFacade;
 import com.example.user.mqconsumer.canal.OrderHandler;
 import com.example.user.mqconsumer.canal.TableSyncHandler;
@@ -44,7 +45,7 @@ class CanalSyncConsumerTest {
 
     private final CanalSyncConsumer consumerWithRealHandlers =
             new CanalSyncConsumer(new CanalPacketParser(), new CanalEventConverter(),
-                    List.of(new UserHandler(), new OrderHandler()),
+                    List.of(new UserHandler(new FieldChangeFilter()), new OrderHandler()),
                     executingFacade());
 
     private static MessageExt messageExt(CanalEntry.Entry... entries) {
@@ -65,6 +66,24 @@ class CanalSyncConsumerTest {
         consumerWithRealHandlers.onMessage(messageExt(entry));
 
         assertThat(output).contains("seata_user.users", "type=INSERT", "rows=1", "mysql-bin.000001:1234");
+    }
+
+    @Test
+    void skipsUserUpdateWhenPointsUnchanged(CapturedOutput output) {
+        CanalEntry.Entry entry = rowEntry("seata_user", "users", CanalEntry.EventType.UPDATE,
+                "mysql-bin.000001", 1500L,
+                List.of(row(
+                        List.of(col("id", "1", true),
+                                col("points", "100", false),
+                                col("nickname", "old", false)),
+                        List.of(col("id", "1", true),
+                                col("points", "100", false),
+                                col("nickname", "new", false, true)))));
+
+        consumerWithRealHandlers.onMessage(messageExt(entry));
+
+        assertThat(output).contains("字段未变更，跳过: seata_user.users");
+        assertThat(output).doesNotContain("收到表变更 seata_user.users");
     }
 
     @Test
@@ -119,6 +138,7 @@ class CanalSyncConsumerTest {
         TableSyncHandler order = mock(TableSyncHandler.class);
         when(user.supportedKey()).thenReturn("seata_user.users");
         when(user.idempotent()).thenReturn(true);
+        when(user.shouldHandle(any())).thenReturn(true);
         when(order.supportedKey()).thenReturn("seata_order.orders");
         CanalSyncConsumer consumer = new CanalSyncConsumer(new CanalPacketParser(), new CanalEventConverter(),
                 List.of(user, order), mock(IdempotencyFacade.class));
@@ -137,6 +157,7 @@ class CanalSyncConsumerTest {
         TableSyncHandler orderItems = mock(TableSyncHandler.class);
         when(orderItems.supportedKey()).thenReturn("seata_order.order_items");
         when(orderItems.idempotent()).thenReturn(false);
+        when(orderItems.shouldHandle(any())).thenReturn(true);
         IdempotencyFacade facade = mock(IdempotencyFacade.class);
         CanalSyncConsumer consumer = new CanalSyncConsumer(new CanalPacketParser(), new CanalEventConverter(),
                 List.of(orderItems), facade);
