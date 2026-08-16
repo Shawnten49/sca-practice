@@ -51,13 +51,14 @@ class IdempotencyFacadeTest {
         when(syncLogMapper.insertIgnore(any(SyncLog.class))).thenReturn(1);
         Runnable business = mock(Runnable.class);
 
-        facade.executeWithDedup(message("mysql-bin.000001", 123L), business);
+        facade.executeWithDedup(message("mysql-bin.000001", 123L), "3", business);
 
         verify(business).run();
         ArgumentCaptor<SyncLog> captor = ArgumentCaptor.forClass(SyncLog.class);
         verify(syncLogMapper).insertIgnore(captor.capture());
         assertThat(captor.getValue().getLogFileName()).isEqualTo("mysql-bin.000001");
         assertThat(captor.getValue().getLogFileOffset()).isEqualTo(123L);
+        assertThat(captor.getValue().getRowKey()).isEqualTo("3");
     }
 
     @Test
@@ -65,7 +66,7 @@ class IdempotencyFacadeTest {
         when(syncLogMapper.insertIgnore(any(SyncLog.class))).thenReturn(0);
         Runnable business = mock(Runnable.class);
 
-        facade.executeWithDedup(message("mysql-bin.000001", 123L), business);
+        facade.executeWithDedup(message("mysql-bin.000001", 123L), "3", business);
 
         verify(business, never()).run();
         verify(syncLogMapper).insertIgnore(any(SyncLog.class));
@@ -75,7 +76,7 @@ class IdempotencyFacadeTest {
     void missingPositionRunsDirectlyWithoutDedup() {
         Runnable business = mock(Runnable.class);
 
-        facade.executeWithDedup(message(null, 0L), business);
+        facade.executeWithDedup(message(null, 0L), "3", business);
 
         verify(business).run();
         verify(syncLogMapper, never()).insertIgnore(any(SyncLog.class));
@@ -87,7 +88,7 @@ class IdempotencyFacadeTest {
         Runnable business = mock(Runnable.class);
         doThrow(new RuntimeException("db down")).when(business).run();
 
-        assertThatThrownBy(() -> facade.executeWithDedup(message("mysql-bin.000001", 123L), business))
+        assertThatThrownBy(() -> facade.executeWithDedup(message("mysql-bin.000001", 123L), "3", business))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("db down");
 

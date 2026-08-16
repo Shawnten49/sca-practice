@@ -1,11 +1,14 @@
 package com.example.user.mqconsumer;
 
-import com.example.user.mqconsumer.canal.CanalMessage;
+import com.alibaba.otter.canal.protocol.CanalEntry;
+import com.example.user.mqconsumer.canal.CanalEventConverter;
+import com.example.user.mqconsumer.canal.CanalPacketParser;
+import com.example.user.mqconsumer.canal.CanalTestMessages;
 import com.example.user.mqconsumer.canal.IdempotencyFacade;
 import com.example.user.mqconsumer.canal.OrderHandler;
 import com.example.user.mqconsumer.canal.TableSyncHandler;
 import com.example.user.mqconsumer.canal.UserHandler;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.rocketmq.common.message.MessageExt;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.system.CapturedOutput;
@@ -13,8 +16,14 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
 
 import java.util.List;
 
+import static com.example.user.mqconsumer.canal.CanalTestMessages.col;
+import static com.example.user.mqconsumer.canal.CanalTestMessages.message;
+import static com.example.user.mqconsumer.canal.CanalTestMessages.row;
+import static com.example.user.mqconsumer.canal.CanalTestMessages.rowEntry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -23,68 +32,83 @@ import static org.mockito.Mockito.when;
 @ExtendWith(OutputCaptureExtension.class)
 class CanalSyncConsumerTest {
 
-    private static final String USER_INSERT_JSON = """
-            {"data":[{"id":"1","nickname":"demo","points":"100"}],"database":"seata_user",
-             "es":1786816662000,"gtid":"","id":1,"isDdl":false,"old":null,"pkNames":["id"],
-             "sql":"","table":"users","ts":1786816662633,"type":"INSERT","logFileName":"mysql-bin.000001","logFileOffset":1234}
-            """;
-
-    private static final String ORDER_UPDATE_JSON = """
-            {"data":[{"id":"4","user_id":"1","product_id":"1","count":"1"}],"database":"seata_order",
-             "old":[{"count":"2"}],"pkNames":["id"],"isDdl":false,"table":"orders",
-             "type":"UPDATE","logFileName":"mysql-bin.000002","logFileOffset":5678}
-            """;
-
-    private static final String UNKNOWN_TABLE_JSON = """
-            {"database":"seata_stock","table":"stock","isDdl":false,"type":"UPDATE","pkNames":["id"]}
-            """;
-
-    private static final String DDL_JSON = """
-            {"database":"seata_user","table":"users","isDdl":true,"type":"ALTER","sql":"ALTER TABLE users ADD COLUMN x INT"}
-            """;
-
-    private static final String ORDER_ITEMS_JSON = """
-            {"data":[{"id":"9","order_id":"4","product_id":"1"}],"database":"seata_order",
-             "isDdl":false,"pkNames":["id"],"table":"order_items","type":"INSERT",
-             "logFileName":"mysql-bin.000003","logFileOffset":999}
-            """;
+    /** mock 门面：立即执行传入的业务 Runnable，让真实 Handler 的日志输出可被断言。 */
+    private static IdempotencyFacade executingFacade() {
+        IdempotencyFacade facade = mock(IdempotencyFacade.class);
+        doAnswer(inv -> {
+            ((Runnable) inv.getArgument(2)).run();
+            return null;
+        }).when(facade).executeWithDedup(any(), anyString(), any(Runnable.class));
+        return facade;
+    }
 
     private final CanalSyncConsumer consumerWithRealHandlers =
-            new CanalSyncConsumer(new ObjectMapper(),
+            new CanalSyncConsumer(new CanalPacketParser(), new CanalEventConverter(),
                     List.of(new UserHandler(), new OrderHandler()),
-                    mock(IdempotencyFacade.class));
+                    executingFacade());
+
+    private static MessageExt messageExt(CanalEntry.Entry... entries) {
+        MessageExt ext = new MessageExt();
+        ext.setTopic("canal-topic");
+        ext.setQueueId(0);
+        ext.setMsgId("test-msg");
+        ext.setBody(CanalTestMessages.packetOf(message(1L, entries)));
+        return ext;
+    }
 
     @Test
     void routesUserTableEventToUserHandler(CapturedOutput output) {
-        consumerWithRealHandlers.onMessage(USER_INSERT_JSON);
+        CanalEntry.Entry entry = rowEntry("seata_user", "users", CanalEntry.EventType.INSERT,
+                "mysql-bin.000001", 1234L,
+                List.of(row(null, List.of(col("id", "1", true), col("nickname", "demo", false)))));
+
+        consumerWithRealHandlers.onMessage(messageExt(entry));
 
         assertThat(output).contains("seata_user.users", "type=INSERT", "rows=1", "mysql-bin.000001:1234");
     }
 
     @Test
     void routesOrderTableEventToOrderHandler(CapturedOutput output) {
-        consumerWithRealHandlers.onMessage(ORDER_UPDATE_JSON);
+        CanalEntry.Entry entry = rowEntry("seata_order", "orders", CanalEntry.EventType.UPDATE,
+                "mysql-bin.000002", 5678L,
+                List.of(row(
+                        List.of(col("id", "4", true), col("count", "2", false)),
+                        List.of(col("id", "4", true), col("count", "1", false)))));
+
+        consumerWithRealHandlers.onMessage(messageExt(entry));
 
         assertThat(output).contains("seata_order.orders", "type=UPDATE", "rows=1");
     }
 
     @Test
     void skipsUnregisteredTable(CapturedOutput output) {
-        consumerWithRealHandlers.onMessage(UNKNOWN_TABLE_JSON);
+        CanalEntry.Entry entry = rowEntry("seata_stock", "stock", CanalEntry.EventType.UPDATE,
+                "mysql-bin.000001", 100L,
+                List.of(row(null, List.of(col("id", "1", true)))));
+
+        consumerWithRealHandlers.onMessage(messageExt(entry));
 
         assertThat(output).contains("未注册的表变更事件，跳过: seata_stock.stock");
     }
 
     @Test
     void skipsDdlEvent(CapturedOutput output) {
-        consumerWithRealHandlers.onMessage(DDL_JSON);
+        CanalEntry.Entry entry = CanalTestMessages.ddlEntry("seata_user", "users",
+                "ALTER TABLE users ADD COLUMN x INT", "mysql-bin.000001", 200L);
+
+        consumerWithRealHandlers.onMessage(messageExt(entry));
 
         assertThat(output).contains("DDL 事件不处理，跳过: seata_user.users");
     }
 
     @Test
-    void skipsMalformedJsonWithoutThrowing(CapturedOutput output) {
-        consumerWithRealHandlers.onMessage("not-a-json");
+    void skipsMalformedMessageWithoutThrowing(CapturedOutput output) {
+        MessageExt ext = new MessageExt();
+        ext.setTopic("canal-topic");
+        ext.setMsgId("bad-msg");
+        ext.setBody("not-a-canal-packet".getBytes());
+
+        consumerWithRealHandlers.onMessage(ext);
 
         assertThat(output).contains("解析 Canal 消息失败");
     }
@@ -96,27 +120,33 @@ class CanalSyncConsumerTest {
         when(user.supportedKey()).thenReturn("seata_user.users");
         when(user.idempotent()).thenReturn(true);
         when(order.supportedKey()).thenReturn("seata_order.orders");
-        CanalSyncConsumer consumer = new CanalSyncConsumer(new ObjectMapper(),
+        CanalSyncConsumer consumer = new CanalSyncConsumer(new CanalPacketParser(), new CanalEventConverter(),
                 List.of(user, order), mock(IdempotencyFacade.class));
 
-        consumer.onMessage(USER_INSERT_JSON);
+        CanalEntry.Entry entry = rowEntry("seata_user", "users", CanalEntry.EventType.INSERT,
+                "mysql-bin.000001", 300L,
+                List.of(row(null, List.of(col("id", "1", true)))));
+        consumer.onMessage(messageExt(entry));
 
-        verify(user).handle(any(CanalMessage.class));
+        verify(user).handle(any());
         verify(order, never()).handle(any());
     }
 
     @Test
-    void nonIdempotentHandlerGoesThroughDedupFacade() {
+    void nonIdempotentHandlerGoesThroughDedupFacadeWithRowKey() {
         TableSyncHandler orderItems = mock(TableSyncHandler.class);
         when(orderItems.supportedKey()).thenReturn("seata_order.order_items");
         when(orderItems.idempotent()).thenReturn(false);
         IdempotencyFacade facade = mock(IdempotencyFacade.class);
-        CanalSyncConsumer consumer = new CanalSyncConsumer(new ObjectMapper(),
+        CanalSyncConsumer consumer = new CanalSyncConsumer(new CanalPacketParser(), new CanalEventConverter(),
                 List.of(orderItems), facade);
 
-        consumer.onMessage(ORDER_ITEMS_JSON);
+        CanalEntry.Entry entry = rowEntry("seata_order", "order_items", CanalEntry.EventType.INSERT,
+                "mysql-bin.000003", 999L,
+                List.of(row(null, List.of(col("id", "9", true), col("order_id", "4", false)))));
+        consumer.onMessage(messageExt(entry));
 
-        verify(facade).executeWithDedup(any(CanalMessage.class), any(Runnable.class));
+        verify(facade).executeWithDedup(any(), anyString(), any(Runnable.class));
         verify(orderItems, never()).handle(any());
     }
 }

@@ -16,6 +16,11 @@ public class UserHandler implements TableSyncHandler {
     }
 
     @Override
+    public boolean idempotent() {
+        return false;
+    }
+
+    @Override
     public void handle(CanalMessage message) {
         log.info("收到表变更 {} type={} rows={} pkNames={} pos={}:{}",
                 message.routeKey(),

@@ -2,11 +2,11 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.user.mapper.SyncLogMapper">
 
-    <!-- 幂等抢占：binlog 位点唯一索引兜底，返回 0 即已处理过 -->
+    <!-- 幂等抢占：binlog 位点 + 行级 key 唯一索引兜底，返回 0 即已处理过 -->
     <insert id="insertIgnore" parameterType="com.example.user.domain.SyncLog"
             useGeneratedKeys="true" keyProperty="id">
-        INSERT IGNORE INTO sync_log (log_file_name, log_file_offset)
-        VALUES (#{logFileName}, #{logFileOffset})
+        INSERT IGNORE INTO sync_log (log_file_name, log_file_offset, row_key)
+        VALUES (#{logFileName}, #{logFileOffset}, #{rowKey})
     </insert>
 
 </mapper>

@@ -35,8 +35,9 @@ class SyncLogMapperXmlTest {
                     "id BIGINT AUTO_INCREMENT PRIMARY KEY," +
                     "log_file_name VARCHAR(64) NOT NULL," +
                     "log_file_offset BIGINT NOT NULL," +
+                    "row_key VARCHAR(128) NOT NULL DEFAULT ''," +
                     "create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP," +
-                    "UNIQUE KEY uk_sync_log_position (log_file_name, log_file_offset))");
+                    "UNIQUE KEY uk_sync_log_position (log_file_name, log_file_offset, row_key))");
         }
 
         MybatisSqlSessionFactoryBean factoryBean = new MybatisSqlSessionFactoryBean();
@@ -82,10 +83,25 @@ class SyncLogMapperXmlTest {
         assertThat(insert("mysql-bin.000002", 1L)).isEqualTo(1);
     }
 
+    @Test
+    void samePositionDifferentRowKeyAllowed() {
+        // 同一条多行 SQL：位点相同、行级 key 不同，必须都能抢占
+        assertThat(insert("mysql-bin.000001", 123L, "1")).isEqualTo(1);
+        assertThat(insert("mysql-bin.000001", 123L, "2")).isEqualTo(1);
+
+        // 同一位点 + 同一行重复投递 → 去重
+        assertThat(insert("mysql-bin.000001", 123L, "1")).isZero();
+    }
+
     private int insert(String file, long offset) {
+        return insert(file, offset, "");
+    }
+
+    private int insert(String file, long offset, String rowKey) {
         return syncLogMapper.insertIgnore(SyncLog.builder()
                 .logFileName(file)
                 .logFileOffset(offset)
+                .rowKey(rowKey)
                 .build());
     }
 }

@@ -23,6 +23,10 @@
         <spring-cloud-alibaba.version>2025.0.0.0</spring-cloud-alibaba.version>
         <dubbo.version>3.3.6</dubbo.version>
         <rocketmq-spring-boot.version>2.3.6</rocketmq-spring-boot.version>
+        <!-- 修复：依赖树里旧版 fastjson2(2.0.31) 会抢占 rocketmq 客户端依赖的
+             com.alibaba.fastjson2 类，导致 RemotingCommand 序列化异常、连不上 nameserver。
+             统一为 2.0.59（与 rocketmq 5.x 分发版一致） -->
+        <fastjson2.version>2.0.59</fastjson2.version>
         <commons-lang3.version>3.18.0</commons-lang3.version>
         <lz4-java.version>1.10.1</lz4-java.version>
         <grpc-netty-shaded.version>1.75.0</grpc-netty-shaded.version>
@@ -87,6 +91,11 @@
                 <groupId>org.apache.rocketmq</groupId>
                 <artifactId>rocketmq-spring-boot-starter</artifactId>
                 <version>${rocketmq-spring-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba.fastjson2</groupId>
+                <artifactId>fastjson2</artifactId>
+                <version>${fastjson2.version}</version>
             </dependency>
             <!-- 安全漏洞修复：覆盖传递依赖的漏洞版本 -->
             <dependency>

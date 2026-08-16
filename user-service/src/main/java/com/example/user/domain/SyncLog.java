@@ -25,5 +25,8 @@ public class SyncLog {
 
     private Long logFileOffset;
 
+    /** 行级去重键：主键值拼接（如 "3"），无主键表为消息内行号（如 "r0"）。 */
+    private String rowKey;
+
     private LocalDateTime createTime;
 }
