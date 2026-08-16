@@ -1,5 +1,6 @@
 package com.example.order.service;
 
+import com.example.id.IdGenerator;
 import com.example.order.client.StockClient;
 import com.example.order.domain.Order;
 import com.example.order.mapper.OrderMapper;
@@ -17,7 +18,8 @@ class OrderServiceTest {
 
     private final OrderMapper orderMapper = mock(OrderMapper.class);
     private final StockClient stockClient = mock(StockClient.class);
-    private final OrderService orderService = new OrderService(orderMapper, stockClient);
+    private final IdGenerator idGenerator = mock(IdGenerator.class);
+    private final OrderService orderService = new OrderService(orderMapper, stockClient, idGenerator);
 
     @Test
     void createOrder_success() {

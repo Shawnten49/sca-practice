@@ -1,5 +1,6 @@
 package com.example.order.service;
 
+import com.example.id.IdGenerator;
 import com.example.order.client.StockClient;
 import com.example.order.domain.Order;
 import com.example.order.mapper.OrderMapper;
@@ -13,16 +14,18 @@ public class OrderService {
     private final OrderMapper orderMapper;
     private final StockClient stockClient;
 
-    private static final IdWorker ID_WORKER = new IdWorker(2L);
+//    private static final IdWorker ID_WORKER = new IdWorker(2L);
+    private final IdGenerator idGenerator;
 
-    public OrderService(OrderMapper orderMapper, StockClient stockClient) {
+    public OrderService(OrderMapper orderMapper, StockClient stockClient, IdGenerator idGenerator) {
         this.orderMapper = orderMapper;
         this.stockClient = stockClient;
+        this.idGenerator = idGenerator;
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
     public String createOrder(Long userId, Long productId, Integer count, boolean fail) {
-        Long orderId = ID_WORKER.nextId();
+        Long orderId = idGenerator.nextId();
         // 1) 本库插订单
         orderMapper.insertOrder(Order.builder()
                 .id(orderId)
