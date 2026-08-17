@@ -124,7 +124,7 @@ cd gateway-service && java -jar target/gateway-service-0.0.1-SNAPSHOT.jar # 8088
 
 ## 实践问答文档
 
-- [ShardingSphere 分表 + Seata 实践问答全记录](doc/shardingsphere-seata-practice-qa.md)（含 HTML 版：`doc/shardingsphere-seata-practice-qa.html`）：分表设计、Seata × ShardingSphere 官方集成、双数据源本地/分布式事务显式区分、@MapperScan 批量注册
+- [ShardingSphere 分表 + Seata 实践问答全记录](doc/shardingsphere-seata-practice-qa.md)：分表设计、Seata × ShardingSphere 官方集成、双数据源本地/分布式事务显式区分、@MapperScan 批量注册（HTML 版在本地课件 `lessons/0026-shardingsphere-seata-practice-qa.html`，不入库）
 - [Canal 学习与实践问答全记录](doc/canal-practice-qa.md)：Canal 选型、环境搭建、消费端路由分发、幂等与字段级过滤
 - [Leaf 实践问答全记录](doc/leaf-practice-qa.md)：Leaf 选型、号段模式正确性、环境搭建、依赖排障
 

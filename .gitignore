@@ -15,6 +15,9 @@ target/
 logs/
 *.log
 
+# 实践问答 HTML 课件（只放本地课程目录，不提交到 GitHub）
+doc/*.html
+
 # 本地工具配置
 .claude/
 
