@@ -15,6 +15,7 @@ Spring Cloud Alibaba 分布式微服务学习实践项目。从零搭建一套�
 | 分布式事务 | Seata 2.6.0（AT 模式） |
 | 消息队列 | RocketMQ 5.5.0（含事务消息） |
 | 数据库 | MySQL 8.4 |
+| 分库分表 | ShardingSphere 5.5.3（orders → orders_0~3，按 id % 4 分片） |
 | 工程化 | Flyway 数据库迁移 · OpenAPI (springdoc) · Actuator 健康检查 · JUnit 5 + Mockito |
 
 ## 模块结构
@@ -25,7 +26,7 @@ Spring Cloud Alibaba 分布式微服务学习实践项目。从零搭建一套�
 | `dubbo-api` | — | 跨服务共享的 Dubbo 接口定义（`StockDubboService`） | Dubbo |
 | `hello-sca` | 8082 | 第一个 Spring Boot 服务，演示 Nacos 配置中心读取 | Nacos Config |
 | `user-service` | 8081 | 用户服务：OpenFeign 调用 hello、Sentinel 限流、RocketMQ 消费者 | OpenFeign · Sentinel · RocketMQ |
-| `order-service` | 8083 | 订单服务：全局事务发起方（TM）、RocketMQ 事务消息、Dubbo/OpenFeign 调用库存 | Seata · RocketMQ · Dubbo · OpenFeign |
+| `order-service` | 8083 | 订单服务：全局事务发起方（TM）、RocketMQ 事务消息、Dubbo/OpenFeign 调用库存、orders 分表 | Seata · RocketMQ · Dubbo · OpenFeign · ShardingSphere |
 | `stock-service` | 8084 | 库存服务：Dubbo 提供者、Seata 分支事务参与方（RM） | Dubbo · Seata |
 | `gateway-service` | 8088 | 统一网关：路由从 MySQL `route_config` 表动态加载并定时刷新 | Gateway · MySQL |
 
@@ -120,6 +121,12 @@ cd gateway-service && java -jar target/gateway-service-0.0.1-SNAPSHOT.jar # 8088
 - **API 文档**：每个服务内置 springdoc，访问 `http://127.0.0.1:{端口}/swagger-ui.html` 查看/调试接口；
 - **健康检查**：每个服务暴露 `http://127.0.0.1:{端口}/actuator/health`（含 `info`、`metrics`）；
 - **单元测试**：`mvn test`（核心服务 + 共享模块共 13 个用例，覆盖异常映射、扣库存、下单与消息时序）。
+
+## 实践问答文档
+
+- [ShardingSphere 分表 + Seata 实践问答全记录](doc/shardingsphere-seata-practice-qa.md)（含 HTML 版：`doc/shardingsphere-seata-practice-qa.html`）：分表设计、Seata × ShardingSphere 官方集成、双数据源本地/分布式事务显式区分、@MapperScan 批量注册
+- [Canal 学习与实践问答全记录](doc/canal-practice-qa.md)：Canal 选型、环境搭建、消费端路由分发、幂等与字段级过滤
+- [Leaf 实践问答全记录](doc/leaf-practice-qa.md)：Leaf 选型、号段模式正确性、环境搭建、依赖排障
 
 ## 目录结构
 

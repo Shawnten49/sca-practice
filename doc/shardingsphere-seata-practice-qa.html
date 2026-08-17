@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShardingSphere 分表 + Seata 实践问答全记录</title>
+<style>
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif; line-height: 1.75; color: #24292f; margin: 0; background: #f6f8fa; }
+  .container { max-width: 860px; margin: 0 auto; padding: 32px 24px 64px; }
+  h1 { font-size: 28px; border-bottom: 2px solid #0969da; padding-bottom: 12px; }
+  h2 { font-size: 22px; margin-top: 40px; border-bottom: 1px solid #d0d7de; padding-bottom: 8px; }
+  h3 { font-size: 17px; margin-top: 28px; }
+  a { color: #0969da; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  blockquote { margin: 0 0 16px; padding: 12px 16px; background: #fff8e6; border-left: 4px solid #d4a72c; border-radius: 4px; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; background: #fff; }
+  th, td { border: 1px solid #d0d7de; padding: 8px 12px; text-align: left; }
+  th { background: #f0f3f6; }
+  pre { background: #0d1117; color: #e6edf3; padding: 14px 16px; border-radius: 6px; overflow-x: auto; font-size: 13px; line-height: 1.6; }
+  code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; background: rgba(175,184,193,0.2); padding: 2px 5px; border-radius: 4px; font-size: 13px; }
+  pre code { background: none; padding: 0; font-size: 13px; }
+  .toc { background: #fff; border: 1px solid #d0d7de; border-radius: 6px; padding: 16px 24px; }
+  .toc ol { margin: 0; padding-left: 22px; }
+  hr { border: none; border-top: 1px solid #d0d7de; margin: 32px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>ShardingSphere 分表 + Seata 实践问答全记录</h1>
+
+<blockquote>
+<p>适用范围：sca-practice 项目（order-service 接入 ShardingSphere 5.5.3 对 <code>orders</code> 分表，并与 Seata AT 模式共存）。</p>
+<p>本文汇总从"分表设计"到"Seata × ShardingSphere 兼容"再到"本地/分布式事务如何用注解显式区分"的完整问答，结论均基于本机实测（Java 21 / Spring Boot 3.5.16 / Spring Cloud Alibaba 2025.0.0.0 / MySQL 8.4 / Seata 客户端 2.5.0 / ShardingSphere 5.5.3）。</p>
+</blockquote>
+
+<div class="toc">
+<ol>
+  <li><a href="#s1">分表设计与初始化</a></li>
+  <li><a href="#s2">启动报错：undo_log 不存在 / Flyway 顺序</a></li>
+  <li><a href="#s3">Seata 与 ShardingSphere 不兼容</a></li>
+  <li><a href="#s4">Java 21 启动报错：javax.transaction 缺失</a></li>
+  <li><a href="#s5">@Transactional 一定走 Seata 吗</a></li>
+  <li><a href="#s6">双数据源：如何用注解显式区分 Seata / 本地事务</a></li>
+  <li><a href="#s7">LocalOrderMapper 注册报错与 XML 化</a></li>
+  <li><a href="#s8">多个 LocalMapper 的批量配置</a></li>
+  <li><a href="#s9">@Mapper 与 @MapperScan 的区别</a></li>
+  <li><a href="#s10">实测验证清单</a></li>
+  <li><a href="#s11">面试要点速记</a></li>
+</ol>
+</div>
+
+<hr>
+
+<h2 id="s1">一、分表设计与初始化</h2>
+
+<h3>Q1. orders 表怎么分？分片键选什么？</h3>
+<p><strong>结论</strong>：分片键用 <code>id</code>，<code>orders</code> 逻辑表路由到 <code>orders_0 ~ orders_3</code> 四张物理表，规则为 <code>id % 4</code>。这是需求侧拍板的约束：用 id 分、相关代码一起改、不做数据备份（学习环境允许直接重建）。</p>
+
+<h3>Q2. 技术方案怎么落地？</h3>
+<p><strong>结论</strong>：ShardingSphere-JDBC 5.5.3 采用 <strong>driver 方式</strong>（<code>ShardingSphereDriver</code> + <code>jdbc:shardingsphere:classpath:shardingsphere.yaml</code>），而不是课程里的 <code>spring.shardingsphere.*</code> starter（5.5.x 已不推荐）。</p>
+<ul>
+  <li><code>shardingsphere.yaml</code>：声明数据源 <code>ds0</code>（MySQL <code>seata_order</code>）、<code>!SHARDING</code> 规则（<code>orders_$→{0..3}</code>，<code>id % 4</code>）和 <code>!SINGLE</code> 规则（<code>*.*</code> → 默认数据源，管住 undo_log、Flyway 历史表等未分片表）；</li>
+  <li>物理表 DDL 由 Flyway 直连 MySQL 执行（<code>V2__shard_orders.sql</code>：建 4 张分片表 → 迁移旧数据 → 删旧表）；</li>
+  <li>分片路由由 <code>ShardingRoutingTest</code>（H2 + 真实 driver）验证，同时覆盖 undo_log 穿透；</li>
+  <li>user-service 的 Canal 消费端同步改为监听 <code>seata_order.orders_0 ~ orders_3</code>（<code>TableSyncHandler.supportedKeys()</code> 支持多 key）。</li>
+</ul>
+<p><strong>关键点</strong>：5.5.x 的 ShardingSphere 不会自动发现未声明的表——任何未配置分片的表（如 <code>undo_log</code>）都必须由 <code>!SINGLE</code> 规则显式声明，否则访问即抛 <code>TableNotFoundException</code>。</p>
+
+<hr>
+
+<h2 id="s2">二、启动报错：undo_log 不存在 / Flyway 顺序</h2>
+
+<h3>Q1. 启动报 <code>Table or view 'undo_log' does not exist</code>，但库里明明有 undo_log；Flyway 最新版本只有 orders 的修改，为什么和迁移顺序有关？</h3>
+<p><strong>结论</strong>：报错发生在<strong>数据源初始化阶段</strong>，早于 Flyway <code>migrate</code> 执行：</p>
+<ul>
+  <li>Seata 客户端初始化时会对数据源执行同款检查 SQL（<code>SELECT 1 FROM undo_log LIMIT 1</code>），此时 Flyway 还没跑完迁移；</li>
+  <li>更关键的是 ShardingSphere 5.5.x 的元数据里<strong>没有未声明表</strong>，检查 SQL 打到 ShardingSphere 后直接报表不存在/无法路由。</li>
+</ul>
+<p>两个修复缺一不可：</p>
+<ol>
+  <li><code>undo_log</code> 表由 <code>V1__init.sql</code> 建好（Flyway 幂等）；Flyway 用 <code>spring.flyway.url</code> <strong>直连物理库</strong>执行 DDL，不走 ShardingSphere 逻辑表路由；</li>
+  <li><code>shardingsphere.yaml</code> 配 <code>!SINGLE</code> 规则（<code>tables: "*.*"</code>，<code>defaultDataSource: ds0</code>），让未分片表穿透到物理库。</li>
+</ol>
+
+<h3>Q2. <code>FlywayFirstConfiguration</code> 这个类有用吗？</h3>
+<p><strong>结论</strong>：没有用。它只是早期尝试控制 Flyway 启动顺序的残留，现已删除，启动顺序问题由"Flyway 直连物理库 + <code>!SINGLE</code> 规则"真正解决。</p>
+
+<hr>
+
+<h2 id="s3">三、Seata 与 ShardingSphere 不兼容</h2>
+
+<h3>Q1. 去掉 <code>@GlobalTransactional</code> 程序正常，保留就报：</h3>
+<pre><code>DBC Connection [...ConnectionProxy@...] will not be managed by Spring
+Preparing: INSERT INTO orders (id, user_id, product_id, count) VALUES (?, ?, ?, ?)
+ERROR AbstractTableMetaCache - get table meta of the table `orders` error: Failed to fetch schema of orders</code></pre>
+<p><strong>结论</strong>：这是 Seata 2.x 自动代理和 ShardingSphere 逻辑表的根本冲突：</p>
+<ul>
+  <li>Seata 的 <code>SeataAutoDataSourceProxyCreator</code> 会把 ShardingSphereDataSource 包成 <code>DataSourceProxy</code>；</li>
+  <li>AT 模式生成 undo log 时用 JDBC <code>DatabaseMetaData</code> 查<strong>逻辑表 <code>orders</code></strong> 的元数据；</li>
+  <li>而 ShardingSphere 元数据里只有物理表 <code>orders_0 ~ orders_3</code>，查不到 <code>orders</code> → "Failed to fetch schema of orders"。</li>
+</ul>
+
+<h3>Q2. 官方兼容方案是什么？</h3>
+<p><strong>结论</strong>：ShardingSphere 5.5.3 提供官方 Seata AT 集成（<code>shardingsphere-transaction-base-seata-at</code>），要点：</p>
+<ol>
+  <li>依赖：引入 <code>org.apache.shardingsphere:shardingsphere-transaction-base-seata-at:5.5.3</code>（Seata 客户端需 2.5.0+，本项目是 2.5.0）；按官方要求排除 <code>seata-all</code> 传递的旧版 <code>antlr4-runtime</code>；</li>
+  <li><code>shardingsphere.yaml</code> 增加：
+<pre><code>transaction:
+  defaultType: BASE
+  providerType: Seata</code></pre></li>
+  <li>classpath 增加 <code>seata.conf</code>（<code>shardingsphere.transaction.seata.at.enable=true</code>、<code>tx.timeout=60</code>、<code>client.application.id=order-service</code>、<code>transaction.service.group=seata_tx_group</code>）；</li>
+  <li><code>application.yml</code> 设 <strong><code>seata.enable-auto-data-source-proxy: false</code></strong>（防止 Seata 再包一层代理，这是崩溃根源）；</li>
+  <li><strong>禁止在分片数据源上用 <code>@GlobalTransactional</code></strong>，业务方法改用 Spring <code>@Transactional</code>（<code>TransactionTemplate</code>、<code>jakarta.transaction.Transactional</code> 同样允许）。</li>
+</ol>
+<p><strong>XID 传播</strong>：官方集成的 <code>SeataATShardingSphereTransactionManager</code> 把 XID 写入 Seata <code>RootContext</code>（线程本地），因此 Feign/Dubbo 原有的 XID 传递链路（<code>SeataFeignInterceptor</code> / seata-dubbo filter）无需改动，stock-service 照常作为分支参与方。</p>
+
+<hr>
+
+<h2 id="s4">四、Java 21 启动报错：javax.transaction 缺失</h2>
+
+<h3>Q1. 加了 transaction 规则后启动报：</h3>
+<pre><code>ServiceConfigurationError: ...XAShardingSphereTransactionManager Unable to get public no-arg constructor
+Caused by: NoClassDefFoundError: javax/transaction/SystemException</code></pre>
+<p><strong>结论</strong>：ShardingSphere 构建事务规则时会通过 SPI <strong>预加载全部</strong> <code>ShardingSphereDistributedTransactionManager</code> 实现（包括用不到的 XA），而 <code>shardingsphere-transaction-xa-core</code>（由 <code>shardingsphere-jdbc</code> 传递引入）的类签名引用旧版 JTA API <code>javax.transaction.*</code>：</p>
+<ul>
+  <li>JDK 11+ 已从 JDK 移除 <code>javax.transaction</code> 包；</li>
+  <li>XA 模块声明的 <code>jakarta.transaction-api</code> 提供的是 <code>jakarta.transaction.*</code>，救不了 <code>javax.transaction.*</code>；</li>
+  <li>于是 ServiceLoader 实例化 XA provider 时 <code>NoClassDefFoundError</code>，整个数据源初始化失败。</li>
+</ul>
+<p><strong>修复</strong>：显式引入 <code>javax.transaction:javax.transaction-api:1.3</code>，补回 JTA API。回归测试 <code>TransactionManagerSpiLoadTest</code> 直接走 ServiceLoader 实例化 XA 和 BASE(Seata) 两个 provider，防止复发。此前测试没暴露的原因：测试 YAML 没配 <code>transaction</code> 段，不会触发事务规则的 SPI 预加载。</p>
+
+<hr>
+
+<h2 id="s5">五、@Transactional 一定走 Seata 吗</h2>
+
+<h3>Q1. 我用了 <code>@Transactional</code> 就调用了 Seata；如果只是想用本地事务，怎么区分？</h3>
+<p><strong>结论</strong>：在 ShardingSphere 5.4+ 里<strong>无法按方法区分</strong>——事务模式是<strong>数据源级全局配置</strong>：</p>
+<ul>
+  <li>4.x 的 <code>@ShardingSphereTransactionType</code> / <code>TransactionTypeHolder</code> 在 5.4 起被移除（官方 issue #36219、#24694 确认，5.5.3 jar 中已不存在）；</li>
+  <li>连接创建时 <code>ConnectionTransaction</code> 的 <code>transactionType</code> 优先取连接上下文（新连接恒为空），否则回落 <code>transaction.defaultType</code>；</li>
+  <li>所以 <code>defaultType: BASE</code> 时，该数据源上的所有 <code>@Transactional</code> / <code>TransactionTemplate</code> 都是 Seata 全局事务；</li>
+  <li>不加事务注解 = 物理库 autocommit（不碰 Seata，但多语句也没有本地原子性）。</li>
+</ul>
+<p>文档里"访问前可切换事务类型"是指 Proxy 模式的 DistSQL 能力，JDBC driver 模式下没有对外的按调用切换入口。</p>
+
+<hr>
+
+<h2 id="s6">六、双数据源：如何用注解显式区分 Seata / 本地事务</h2>
+
+<h3>Q1. 想要"分布式流程走 Seata、纯本地流程不走 Seata"，怎么落地？</h3>
+<p><strong>结论</strong>：拆<strong>两个 ShardingSphere 数据源</strong>，分片规则完全一致（<code>orders → orders_0~3</code>，<code>id % 4</code>），只是事务语义不同：</p>
+<table>
+  <tr><th>数据源</th><th>配置</th><th>事务语义</th><th>事务管理器</th></tr>
+  <tr><td><code>dataSource</code>（@Primary）</td><td><code>shardingsphere.yaml</code>，<code>defaultType: BASE</code></td><td>Seata 全局事务</td><td><code>seataTransactionManager</code>（@Primary）</td></tr>
+  <tr><td><code>localDataSource</code></td><td><code>shardingsphere-local.yaml</code>，<code>defaultType: LOCAL</code></td><td>物理库本地事务</td><td><code>localTransactionManager</code></td></tr>
+</table>
+
+<h3>Q2. 写代码时怎么显式感知是否走了 Seata？</h3>
+<p><strong>结论</strong>：两个具名事务管理器 + 按包绑定的 mapper，<strong>注解即显式</strong>：</p>
+<pre><code>@Transactional("seataTransactionManager")  // Seata 全局事务，配合 OrderMapper（BASE 数据源）
+@Transactional("localTransactionManager")  // 本地事务，不走 Seata，配合 LocalOrderMapper（LOCAL 数据源）</code></pre>
+<p>不带名字的 <code>@Transactional</code> 落到 <code>@Primary</code> 的 <code>seataTransactionManager</code>（默认就是 Seata，符合"宁可显式也不悄悄退化成 autocommit"的安全方向）。<strong>事务管理器与 mapper 必须成对使用</strong>：<code>localTransactionManager</code> 配 <code>LocalOrderMapper</code>；如果错配成 BASE 的 <code>OrderMapper</code>，MyBatis 连接和事务不同源，会退化成逐条 autocommit——所以看见 <code>LocalOrderMapper</code> 就必须配 local 管理器。</p>
+<p>示例：<code>OrderMqTransactionListener.executeLocalTransaction</code>（RocketMQ 事务消息的本地插入）改为 <code>@Transactional("localTransactionManager")</code> + <code>LocalOrderMapper</code>，本地插入不再产生 Seata 全局事务和 undo_log。</p>
+
+<hr>
+
+<h2 id="s7">七、LocalOrderMapper 注册报错与 XML 化</h2>
+
+<h3>Q1. 启动报 <code>BeanInstantiationException: Type interface ...LocalOrderMapper is not known to the MapperRegistry</code></h3>
+<p><strong>结论</strong>：<strong>注解式 mapper 不会自动注册进 MapperRegistry</strong>。XML 或 <code>@MapperScan</code> 会触发注册，但通过 <code>SqlSessionTemplate.getMapper()</code> 手动取代理前必须先注册。修复：取代理前 <code>configuration.addMapper(LocalOrderMapper.class)</code>。</p>
+
+<h3>Q2. 想把 SQL 从注解改成 XML 维护，怎么调整？</h3>
+<p><strong>结论</strong>：</p>
+<ol>
+  <li>接口去掉 <code>@Insert</code>，只留方法签名；</li>
+  <li>新建 <code>src/main/resources/mapper-local/LocalOrderMapper.xml</code>，namespace 为接口全限定名，SQL 与 <code>OrderMapper.xml</code> 一致；</li>
+  <li>LOCAL 工厂 <code>setMapperLocations("classpath*:mapper-local/*.xml")</code> 显式加载；XML 的 namespace 绑定会自动 <code>addMapper</code>，手动注册可删。</li>
+</ol>
+<p><strong>为什么放 <code>mapper-local/</code> 而不是 <code>mapper/</code></strong>：BASE 工厂的 mapper-locations 是 <code>classpath*:mapper/**/*.xml</code>，放 <code>mapper/</code> 下会被 BASE 工厂也解析一遍，把 LOCAL 的语句注册进 Seata 数据源，职责就混了。</p>
+
+<hr>
+
+<h2 id="s8">八、多个 LocalMapper 的批量配置</h2>
+
+<h3>Q1. 每个 LocalMapper 都写一个 <code>buildXxx</code> 工厂方法太复杂，有没有简单的批量方式？</h3>
+<p><strong>结论</strong>：用标准的 <strong><code>@MapperScan</code> + 两个 SqlSessionFactory</strong> 按包绑定：</p>
+<pre><code>@MapperScan(basePackages = "com.example.order.mapper", sqlSessionFactoryRef = "sqlSessionFactory")      // BASE（Seata）
+@MapperScan(basePackages = "com.example.order.dao",   sqlSessionFactoryRef = "localSqlSessionFactory") // LOCAL（本地）</code></pre>
+<p>之后新增本地 mapper 的流程是<strong>零配置</strong>：接口放 <code>com.example.order.dao</code>、XML 放 <code>resources/mapper-local/</code>，自动注册。</p>
+<p><strong>关键约束（反编译验证）</strong>：MyBatis-Plus 自动装配的 <code>sqlSessionFactory</code> 是 <code>@ConditionalOnMissingBean(SqlSessionFactory.class)</code>（<strong>按类型</strong>），classpath 上出现任何第二个 SqlSessionFactory Bean 就会整体退避，导致 <code>@MapperScan</code> 失去工厂。所以正确的做法是<strong>显式接管两个工厂</strong>：</p>
+<ul>
+  <li>BASE 工厂继续从 <code>MybatisPlusProperties</code> 读配置（<code>application.yml</code> 的 <code>mybatis-plus.*</code> 仍有效；注意 3.5.17 的 <code>getConfiguration()</code> 返回 <code>CoreConfiguration</code>，要用 <code>applyTo(new MybatisConfiguration())</code> 应用）；</li>
+  <li>LOCAL 工厂只加载 <code>mapper-local/*.xml</code>。</li>
+</ul>
+<p><code>OrderApplication</code> 上原来的 <code>@MapperScan</code> 已移除，统一收口到 <code>OrderDataSourceConfig</code>。</p>
+
+<hr>
+
+<h2 id="s9">九、@Mapper 与 @MapperScan 的区别</h2>
+
+<h3>Q1. <code>LocalOrderMapper</code> 没加 <code>@Mapper</code> 怎么也被找到了？<code>OrderMapper</code> 就加了。</h3>
+<p><strong>结论</strong>：两种注册机制，<code>@Mapper</code> 不是 <code>@MapperScan</code> 的必需品：</p>
+<ul>
+  <li><strong>显式 <code>@MapperScan</code> 默认收包内所有接口</strong>：反编译 <code>ClassPathMapperScanner.registerFilters()</code>，未指定 <code>annotationClass</code> / <code>markerInterface</code> 时 <code>acceptAllInterfaces=true</code>，不需要任何注解；</li>
+  <li><strong><code>@Mapper</code> 是给"没有 @MapperScan 的自动扫描"用的</strong>：Spring Boot 下 MyBatis/MyBatis-Plus 的自动扫描器（<code>AutoConfiguredMapperScannerRegistrar</code>）以 <code>@Mapper</code> 为过滤条件，只注册带注解的接口；</li>
+  <li>本项目两个包都有显式 <code>@MapperScan</code>，所以 <code>OrderMapper</code> 上的 <code>@Mapper</code> 是<strong>冗余的</strong>（无害）；自动扫描器也会因为存在显式 <code>@MapperScan</code> 而退避，<code>@Mapper</code> 实际没被消费。</li>
+</ul>
+
+<hr>
+
+<h2 id="s10">十、实测验证清单</h2>
+<ol>
+  <li><code>mvn -pl order-service -am test</code>：order-service 30 个用例全部通过（分片路由、undo_log 穿透、SPI 加载、本地工厂注册等）；</li>
+  <li>重启 order-service（MySQL / Nacos / Seata 先启动）：
+    <ul>
+      <li><code>/order/create?userId=1&amp;productId=1&amp;count=1&amp;fail=false</code>：日志出现 Seata 全局事务（XID）、INSERT 路由到 <code>orders_?</code>；</li>
+      <li>同 URL 加 <code>fail=true</code>：抛异常并触发<strong>全局回滚</strong>，订单与库存同时回滚；</li>
+      <li><code>/order/create3?userId=1&amp;productId=1&amp;count=1</code>：RocketMQ 半消息触发监听器本地插入，只有 ShardingSphere 路由 SQL，无 XID、无 undo_log——证明走 LOCAL 事务；</li>
+    </ul>
+  </li>
+  <li>观察点：两个 YAML 都开着 <code>sql-show: true</code>，靠日志区分两条事务路径；<code>undo_log</code> 是否有写入也可佐证。</li>
+</ol>
+
+<hr>
+
+<h2 id="s11">十一、面试要点速记</h2>
+<ul>
+  <li><strong>分片键与路由</strong>：<code>orders</code> 按 <code>id % 4</code> 分 4 张表；逻辑表 SQL 不变，物理 DDL 交给 Flyway 直连物理库；</li>
+  <li><strong>5.5.x 集成方式</strong>：<code>ShardingSphereDriver</code> + <code>jdbc:shardingsphere:classpath:xxx.yaml</code>，分片核心按插件显式引入；未分片表必须配 <code>!SINGLE</code>；</li>
+  <li><strong>Seata × ShardingSphere</strong>：官方集成三件套 = <code>shardingsphere-transaction-base-seata-at</code> 依赖 + YAML <code>transaction</code> 段（BASE/Seata）+ <code>seata.enable-auto-data-source-proxy: false</code>；<strong>禁用 <code>@GlobalTransactional</code></strong>，改用 Spring <code>@Transactional</code>；</li>
+  <li><strong>Java 21 缺 JTA</strong>：<code>shardingsphere-jdbc</code> 会带 XA 模块，需补 <code>javax.transaction:javax.transaction-api:1.3</code>，否则 SPI 预加载直接崩；</li>
+  <li><strong>5.4+ 事务模式是数据源级配置</strong>：按方法切换事务类型的注解已移除；想同时要本地/分布式语义，就拆两个数据源（BASE + LOCAL）；</li>
+  <li><strong>显式事务约定</strong>：<code>@Transactional("seataTransactionManager")</code> 配 <code>OrderMapper</code> = Seata；<code>@Transactional("localTransactionManager")</code> 配 <code>LocalOrderMapper</code> = 本地；错配会退化成 autocommit；</li>
+  <li><strong>批量注册</strong>：<code>@MapperScan</code> + 双 SqlSessionFactory 按包绑定；注意 MP 自动装配的 <code>@ConditionalOnMissingBean(SqlSessionFactory.class)</code> 会因第二个工厂退避，需显式接管；</li>
+  <li><strong>@Mapper 定位</strong>：只影响"无 @MapperScan 的自动扫描"；有显式 @MapperScan 时接口不需要 @Mapper。</li>
+</ul>
+
+</div>
+</body>
+</html>
