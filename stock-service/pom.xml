@@ -57,6 +57,32 @@
             <groupId>com.example</groupId>
             <artifactId>sca-common</artifactId>
         </dependency>
+        <!-- ES：Spring Data Elasticsearch（Boot BOM 管理 elasticsearch-java 8.18.8，与服务端 8.18.1 同 minor） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
+        </dependency>
+        <!-- RocketMQ 消费（与 user-service 同版本管理；排除旧版 lz4 冲突） -->
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-spring-boot-starter</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.lz4</groupId>
+                    <artifactId>lz4-java</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>at.yawk.lz4</groupId>
+            <artifactId>lz4-java</artifactId>
+        </dependency>
+        <!-- Canal 非 flat 消息（Entry protobuf）解析，与 user-service 一致 -->
+        <dependency>
+            <groupId>com.alibaba.otter</groupId>
+            <artifactId>canal.protocol</artifactId>
+            <version>1.1.8</version>
+        </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>

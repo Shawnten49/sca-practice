@@ -21,6 +21,13 @@ spring:
       maximum-pool-size: 10
       minimum-idle: 2
       connection-timeout: 10000
+  elasticsearch:
+    uris: http://127.0.0.1:9200
+    connection-timeout: 3s
+    socket-timeout: 10s
+
+rocketmq:
+  name-server: 127.0.0.1:9876
 
 seata:
   tx-service-group: seata_tx_group
