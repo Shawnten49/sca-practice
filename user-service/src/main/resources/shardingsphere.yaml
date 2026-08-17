@@ -1,0 +1,36 @@
+# ShardingSphere-JDBC 5.5.3 Sharding 机制配置（仅分表业务使用，经 ShardingSphereDriver 加载）
+# 逻辑表 user_behavior → seata_user 库内 user_behavior_0 ~ user_behavior_3，按 user_id % 4 路由；
+# 物理表 DDL 由 Flyway 直连默认库管理（V5__add_user_behavior.sql）。
+# 注意：不配置 transaction 段（默认 LOCAL）→ 不触发分布式事务 SPI，无需 Seata/JTA 兼容依赖。
+dataSources:
+  ds0:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    jdbcUrl: jdbc:mysql://127.0.0.1:3306/seata_user?createDatabaseIfNotExist=true&useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: ""
+    maximumPoolSize: 5
+    minimumIdle: 1
+
+rules:
+  # 未声明分片的表（如 Flyway 历史表）由 single 规则穿透到默认数据源，避免 TableNotFoundException
+  - !SINGLE
+    tables:
+      - "*.*"
+    defaultDataSource: ds0
+  - !SHARDING
+    tables:
+      user_behavior:
+        actualDataNodes: ds0.user_behavior_$->{0..3}
+        tableStrategy:
+          standard:
+            shardingColumn: user_id
+            shardingAlgorithmName: user-behavior-user-id-mod-4
+    shardingAlgorithms:
+      user-behavior-user-id-mod-4:
+        type: INLINE
+        props:
+          algorithm-expression: user_behavior_$->{user_id % 4}
+
+props:
+  sql-show: true   # 打印路由 SQL，让开发者直观看到物理表，验证后可关

@@ -1,0 +1,31 @@
+# 路由测试专用配置：物理表为 H2 内存库 user_behavior_0 ~ user_behavior_3（由测试代码先建表）
+dataSources:
+  ds0:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: org.h2.Driver
+    jdbcUrl: jdbc:h2:mem:user_behavior_shard_test;MODE=MySQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+    maximumPoolSize: 5
+
+rules:
+  - !SINGLE
+    tables:
+      - "*.*"
+    defaultDataSource: ds0
+  - !SHARDING
+    tables:
+      user_behavior:
+        actualDataNodes: ds0.user_behavior_$->{0..3}
+        tableStrategy:
+          standard:
+            shardingColumn: user_id
+            shardingAlgorithmName: user-behavior-user-id-mod-4
+    shardingAlgorithms:
+      user-behavior-user-id-mod-4:
+        type: INLINE
+        props:
+          algorithm-expression: user_behavior_$->{user_id % 4}
+
+props:
+  sql-show: true

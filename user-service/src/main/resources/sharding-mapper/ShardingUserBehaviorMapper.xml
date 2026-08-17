@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.user.sharding.mapper.ShardingUserBehaviorMapper">
+
+    <!-- 插入行为：id 由服务端雪花生成；create_time 由数据库默认值填充。
+         本 SQL 只被 sharding 工厂加载（sharding-mapper/ 目录），分片路由由 ShardingSphere 负责 -->
+    <insert id="insertUserBehavior" parameterType="com.example.user.sharding.domain.UserBehavior">
+        INSERT INTO user_behavior (id, user_id, action, description, create_time)
+        VALUES (#{id}, #{userId}, #{action}, #{description}, CURRENT_TIMESTAMP(6))
+    </insert>
+
+    <!-- 按 id 查询（创建后回显 create_time）：分片键不在条件里，ShardingSphere 广播到 4 张物理表后合并 -->
+    <select id="selectById" resultType="com.example.user.sharding.domain.UserBehavior">
+        SELECT id, user_id, action, description, create_time
+        FROM user_behavior
+        WHERE id = #{id}
+    </select>
+
+    <!-- 按用户查询：分片键 user_id 命中单张物理表 -->
+    <select id="selectByUserId" resultType="com.example.user.sharding.domain.UserBehavior">
+        SELECT id, user_id, action, description, create_time
+        FROM user_behavior
+        WHERE user_id = #{userId}
+        ORDER BY create_time DESC, id DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

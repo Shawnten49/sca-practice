@@ -1,0 +1,5 @@
+package com.example.user.sharding.dto;
+
+/** 创建用户行为请求体。 */
+public record UserBehaviorCreateRequest(Long userId, String action, String description) {
+}
