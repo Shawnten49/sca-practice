@@ -1,6 +1,7 @@
 # ShardingSphere-JDBC 5.5.3 统一数据源配置（经 ShardingSphereDriver 加载）
 # user-service 全部表走该数据源：!SINGLE 规则让所有不分表的表（users / user_points / sync_log / flyway 历史表等）
 # 穿透到 ds0；!SHARDING 规则只作用于 user_behavior（user_behavior_0 ~ user_behavior_3，user_id % 4）。
+# !ENCRYPT + !MASK 规则只作用于 users.id_card：加密存储（物理列 id_card_cipher）+ 查询返回明文碎片。
 # 物理表 DDL 由 Flyway 直连物理库管理（V5__add_user_behavior.sql）。
 # 注意：不配置 transaction 段（默认 LOCAL）→ 不触发分布式事务 SPI，无需 Seata/JTA 兼容依赖。
 dataSources:
@@ -32,6 +33,39 @@ rules:
         type: INLINE
         props:
           algorithm-expression: user_behavior_$->{user_id % 4}
+
+  # 身份证号脱敏：查询结果在 ENCRYPT 解密后遮盖为明文碎片（保留前 3 后 4，中间 *）
+  - !MASK
+    tables:
+      users:
+        columns:
+          id_card:
+            maskAlgorithm: id-card-keep-first-3-last-4
+    maskAlgorithms:
+      id-card-keep-first-3-last-4:
+        type: KEEP_FIRST_N_LAST_M
+        props:
+          first-n: 3
+          last-m: 4
+          replace-char: '*'
+
+  # 身份证号加密：逻辑列 id_card ↔ 物理密文列 id_card_cipher（AES 可逆加密，Base64 密文）
+  # 注意：ShardingSphereDriver 直接加载本 YAML（纯 SnakeYAML），不支持 ${} 环境变量占位符；
+  # 生产环境密钥需在部署时由配置中心/KMS 渲染本文件，禁止把真实密钥提交到仓库。
+  - !ENCRYPT
+    tables:
+      users:
+        columns:
+          id_card:
+            cipher:
+              name: id_card_cipher
+              encryptorName: id-card-aes
+    encryptors:
+      id-card-aes:
+        type: AES
+        props:
+          aes-key-value: dev-only-change-me
+          digest-algorithm-name: SHA-1
 
 props:
   sql-show: true   # 打印路由 SQL，让开发者直观看到物理表，验证后可关

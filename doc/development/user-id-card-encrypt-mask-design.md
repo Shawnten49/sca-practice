@@ -51,7 +51,7 @@ ALTER TABLE users
 ### 2.3 非空与空串约定（本次新增规定）
 
 - **物理层**：`id_card_cipher NOT NULL DEFAULT ''`，任何绕过逻辑层的写入（如直连 SQL）也不会产生 null；
-- **应用层**：保存用户时 `idCard` 允许为空；为空/缺失统一规范化为空字符串落库（`AES.encrypt('') = ''`，与 DB 默认值两条路径结果一致）；
+- **应用层**：保存用户时 `idCard` 允许为空；为空/缺失统一规范化为空字符串落库（空串经 AES/PKCS5 加密后为 16 字节密文，不会落空值，也不会落明文）；
 - **查询层**：老数据与空值均返回 `idCard = ""`，**永不返回 null**（已核实源码行为：`AES.decrypt('') = ''`，`KEEP_FIRST_N_LAST_M.mask('') = ''`）。
 
 ## 3. ShardingSphere 规则设计（`shardingsphere.yaml`）
@@ -98,7 +98,9 @@ rules:
       id-card-aes:
         type: AES
         props:
-          aes-key-value: ${ID_CARD_AES_KEY:change-me-in-prod}
+          # 注意：ShardingSphereDriver 直接加载 YAML（纯 SnakeYAML），不支持 ${} 环境变量占位符；
+          # 此处仅放开发密钥，生产密钥由配置中心/KMS 在部署时渲染本文件
+          aes-key-value: dev-only-change-me
           digest-algorithm-name: SHA-1
 ```
 
@@ -106,7 +108,7 @@ rules:
 
 1. **脱敏算法**：`KEEP_FIRST_N_LAST_M`（保留前 3 后 4，中间 `*` 遮盖）。18 位身份证展示为 `110***********1234`（3 + 11 个 `*` + 4）；
 2. **加密算法**：内置 `AES`（可逆），`digest-algorithm-name: SHA-1` 将任意长度密钥摘要为 AES 可用密钥；
-3. **密钥管理**：开发环境可用占位符回退值；**生产必须通过环境变量/配置中心注入 `ID_CARD_AES_KEY`，建议 KMS 托管**，且密钥变更会导致历史密文不可解密（见风险）；
+3. **密钥管理**：已核实 ShardingSphereDriver 的 YAML 加载链路（`ShardingSphereURLLoadEngine` → `YamlEngine.unmarshal`）**不支持 `${}` 环境变量占位符**，密钥必须是文件内的字面量——开发环境放示例密钥，**生产由配置中心/KMS 在部署时渲染 `shardingsphere.yaml` 注入真实密钥**，且密钥变更会导致历史密文不可解密（见风险）；
 4. **不配置 `transaction` 段**（沿用现状，默认 LOCAL），不触发分布式事务 SPI；
 5. `!ENCRYPT` 默认 `queryWithCipherColumn=true`：SELECT 自动走密文列并解密，无需额外配置。
 
@@ -235,7 +237,7 @@ public Result<User> user(@RequestParam String id)
 1. **写入加密**：经逻辑列 `id_card` 插入明文 → 直连 rawDataSource 查 `id_card_cipher` 为密文（≠ 明文，且可 AES 解密回明文）；
 2. **查询脱敏**：`SELECT id_card` 返回 `110***********1234`；
 3. **空串约定**：`id_card_cipher = ''` 的老数据 → 查询返回 `""`（非 null，不抛异常）；
-4. 空 `idCard` 保存 → 落库 `''`，查询返回 `""`。
+4. 空 `idCard` 保存 → 空串同样被 AES 加密为密文落库，查询返回 `""`。
 
 ### 7.2 调整 `UserMapperXmlTest`
 
@@ -252,7 +254,7 @@ public Result<User> user(@RequestParam String id)
 
 | 风险 | 影响与应对 |
 | --- | --- |
-| 密钥泄露 | 密钥外置于环境变量/配置中心/KMS；**密钥轮换会使历史密文无法解密**，轮换需配套数据重加密方案（本期不做，文档留痕） |
+| 密钥泄露 | Driver 不支持 YAML 环境变量占位符，生产密钥由配置中心/KMS 在部署时渲染文件注入，禁止明文提交仓库；**密钥轮换会使历史密文无法解密**，轮换需配套数据重加密方案（本期不做，文档留痕） |
 | 加密列不可直接查询 | 密文列无法按身份证等值/模糊/范围检索，也不可建唯一索引；本期无此需求，如需则走 `assistedQuery`（MD5 等值辅助列），属于后续扩展 |
 | 脱敏算法对短串原样返回 | `KEEP_FIRST_N_LAST_M` 在长度 < firstN+lastM 时**不遮盖**；通过保存接口强制 18 位格式校验规避明文泄露 |
 | `GET /user` 破坏性变更 | 返回 String → `Result<User>` JSON；文档与提交说明中标注，仓库内无内部调用方 |
@@ -285,7 +287,7 @@ public Result<User> user(@RequestParam String id)
 | `user-service/src/main/java/com/example/user/dto/UserSaveRequest.java` | 保存用户请求体（record） |
 | `user-service/src/test/java/com/example/user/UserEncryptMaskTest.java` | H2 + ShardingSphere ENCRYPT/MASK 集成测试 |
 | `user-service/src/test/resources/user-encrypt-mask-test.yaml` | 集成测试专用规则 YAML |
-| `user-service/src/test/java/com/example/user/controller/UserControllerTest.java` | 新增接口用例（若当前不存在） |
+| `user-service/src/test/java/com/example/user/controller/UserControllerTest.java` | 新增接口用例（查询全字段/降级/保存/参数校验） |
 | 本文档 | 设计方案 |
 
 ## 10. 本期不做（明确范围外）

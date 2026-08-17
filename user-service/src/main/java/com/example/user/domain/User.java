@@ -30,5 +30,12 @@ public class User {
 
     private Integer credits;
 
+    /**
+     * 身份证号（逻辑列，由 ShardingSphere !ENCRYPT + !MASK 处理）：
+     * 写入为明文（框架加密后存 id_card_cipher）；读取为脱敏碎片（如 110***********1234）。
+     * 非空约定：未录入时为空字符串，永不返回 null。
+     */
+    private String idCard;
+
     private LocalDateTime createTime;
 }

@@ -1,0 +1,48 @@
+# ENCRYPT + MASK 集成测试专用配置：H2 内存库，users 物理表只建 id_card_cipher 密文列
+# （与生产 shardingsphere.yaml 规则一致：逻辑列 id_card → 密文列 id_card_cipher，查询脱敏）
+dataSources:
+  ds0:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: org.h2.Driver
+    # CASE_INSENSITIVE_IDENTIFIERS=TRUE：ShardingSphere ENCRYPT 改写以带引号小写列名访问，
+    # H2 默认未加引号列名存大写、带引号查找大小写敏感（MySQL 生产无此问题）
+    jdbcUrl: jdbc:h2:mem:user_encrypt_mask_test;MODE=MySQL;DB_CLOSE_DELAY=-1;CASE_INSENSITIVE_IDENTIFIERS=TRUE
+    username: sa
+    password: ""
+    maximumPoolSize: 5
+
+rules:
+  - !SINGLE
+    tables:
+      - "*.*"
+    defaultDataSource: ds0
+  - !MASK
+    tables:
+      users:
+        columns:
+          id_card:
+            maskAlgorithm: id-card-keep-first-3-last-4
+    maskAlgorithms:
+      id-card-keep-first-3-last-4:
+        type: KEEP_FIRST_N_LAST_M
+        props:
+          first-n: 3
+          last-m: 4
+          replace-char: '*'
+  - !ENCRYPT
+    tables:
+      users:
+        columns:
+          id_card:
+            cipher:
+              name: id_card_cipher
+              encryptorName: id-card-aes
+    encryptors:
+      id-card-aes:
+        type: AES
+        props:
+          aes-key-value: test-key-5.5.3
+          digest-algorithm-name: SHA-1
+
+props:
+  sql-show: true

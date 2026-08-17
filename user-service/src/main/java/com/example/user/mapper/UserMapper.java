@@ -18,6 +18,9 @@ public interface UserMapper extends BaseMapper<User> {
     /** 按 id 查询用户，返回 Optional，SQL 见 UserMapper.xml */
     Optional<User> selectUserById(Long id);
 
+    /** 保存用户（显式列插入，id 由调用方预生成），SQL 见 UserMapper.xml */
+    int insertUser(User user);
+
     /** 累加用户积分：points = points + #{points}，SQL 见 UserMapper.xml */
     int increasePoints(@Param("userId") Long userId, @Param("points") Integer points);
 

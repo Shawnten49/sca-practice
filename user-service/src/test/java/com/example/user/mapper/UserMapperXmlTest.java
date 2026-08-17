@@ -45,6 +45,7 @@ class UserMapperXmlTest {
                     "nickname VARCHAR(64) NOT NULL," +
                     "points INT NOT NULL DEFAULT 0," +
                     "credits INT NOT NULL DEFAULT 0 CHECK (credits >= 0)," +
+                    "id_card VARCHAR(128) NOT NULL DEFAULT ''," +
                     "create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)");
             st.execute("CREATE TABLE user_points (" +
                     "id BIGINT AUTO_INCREMENT PRIMARY KEY," +
@@ -81,7 +82,7 @@ class UserMapperXmlTest {
     @Test
     void selectUserByIdReturnsMappedUser() {
         // users 表没有 insert XML，用 BaseMapper 内置方法写入（@TableId INPUT 显式指定 id）
-        userMapper.insert(User.builder().id(1L).nickname("demo").points(100).build());
+        userMapper.insert(User.builder().id(1L).nickname("demo").points(100).idCard("110101199003071234").build());
 
         Optional<User> found = userMapper.selectUserById(1L);
         assertThat(found).isPresent();
@@ -89,7 +90,32 @@ class UserMapperXmlTest {
         assertThat(found.get().getNickname()).isEqualTo("demo");
         assertThat(found.get().getPoints()).isEqualTo(100);
         assertThat(found.get().getCredits()).isEqualTo(0);   // 未设置时取列默认值
+        assertThat(found.get().getIdCard()).isEqualTo("110101199003071234");
         assertThat(found.get().getCreateTime()).isNotNull();
+    }
+
+    @Test
+    void insertUserThenSelectByIdRoundTrip() {
+        userMapper.insertUser(User.builder()
+                .id(100L).nickname("zhangsan").points(0).credits(0).idCard("110101199003071234")
+                .build());
+
+        Optional<User> found = userMapper.selectUserById(100L);
+        assertThat(found).isPresent();
+        assertThat(found.get().getNickname()).isEqualTo("zhangsan");
+        assertThat(found.get().getIdCard()).isEqualTo("110101199003071234");
+        assertThat(found.get().getCreateTime()).isNotNull();
+    }
+
+    @Test
+    void insertUserWithBlankIdCardDefaultsToEmptyString() {
+        userMapper.insertUser(User.builder()
+                .id(101L).nickname("lisi").points(0).credits(0).idCard("")
+                .build());
+
+        Optional<User> found = userMapper.selectUserById(101L);
+        assertThat(found).isPresent();
+        assertThat(found.get().getIdCard()).isEqualTo("");
     }
 
     @Test
