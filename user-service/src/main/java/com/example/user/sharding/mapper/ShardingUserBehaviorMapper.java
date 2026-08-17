@@ -8,9 +8,9 @@ import java.util.List;
 /**
  * 用户行为 Mapper（Sharding 机制）。
  *
- * <p>只被 sharding 工厂（shardingSqlSessionFactory）加载，SQL 见
+ * <p>与默认 mapper 共用同一个 SqlSessionFactory（统一 ShardingSphere 数据源），SQL 见
  * resources/sharding-mapper/ShardingUserBehaviorMapper.xml；
- * 不加 @Mapper，由 {@code @MapperScan("com.example.user.sharding.mapper")} 按包绑定到 sharding 工厂。
+ * 不加 @Mapper，由 {@code @MapperScan} 扫描注册。
  */
 public interface ShardingUserBehaviorMapper {
 

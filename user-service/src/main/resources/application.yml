@@ -8,16 +8,19 @@ spring:
     enabled: true
     baseline-on-migrate: true
     baseline-version: 0
+    # 统一 ShardingSphere 数据源后，Flyway 直连物理库执行 DDL（建 user_behavior_0~3 等），绕过逻辑表路由
+    url: jdbc:mysql://127.0.0.1:3306/seata_user?useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    user: root
+    password: ""
   data:
     redis:
       host: 127.0.0.1
       port: 6379
       # password: <若本地 redis 配置了 requirepass 则填写>
   datasource:
-    url: jdbc:mysql://127.0.0.1:3306/seata_user?createDatabaseIfNotExist=true&useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai
-    username: root
-    password: ""
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 统一 ShardingSphere 数据源：全部表走同一数据源，不分表的表由 shardingsphere.yaml 的 !SINGLE 规则穿透
+    driver-class-name: org.apache.shardingsphere.driver.ShardingSphereDriver
+    url: jdbc:shardingsphere:classpath:shardingsphere.yaml
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2
@@ -59,7 +62,7 @@ management:
 
 mybatis-plus:
   # 人工维护的 SQL 映射文件位置
-  mapper-locations: classpath*:mapper/**/*.xml
+  mapper-locations: classpath*:mapper/**/*.xml,classpath*:sharding-mapper/*.xml
   configuration:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl

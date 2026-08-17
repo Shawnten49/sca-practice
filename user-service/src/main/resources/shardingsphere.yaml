@@ -1,6 +1,7 @@
-# ShardingSphere-JDBC 5.5.3 Sharding 机制配置（仅分表业务使用，经 ShardingSphereDriver 加载）
-# 逻辑表 user_behavior → seata_user 库内 user_behavior_0 ~ user_behavior_3，按 user_id % 4 路由；
-# 物理表 DDL 由 Flyway 直连默认库管理（V5__add_user_behavior.sql）。
+# ShardingSphere-JDBC 5.5.3 统一数据源配置（经 ShardingSphereDriver 加载）
+# user-service 全部表走该数据源：!SINGLE 规则让所有不分表的表（users / user_points / sync_log / flyway 历史表等）
+# 穿透到 ds0；!SHARDING 规则只作用于 user_behavior（user_behavior_0 ~ user_behavior_3，user_id % 4）。
+# 物理表 DDL 由 Flyway 直连物理库管理（V5__add_user_behavior.sql）。
 # 注意：不配置 transaction 段（默认 LOCAL）→ 不触发分布式事务 SPI，无需 Seata/JTA 兼容依赖。
 dataSources:
   ds0:
