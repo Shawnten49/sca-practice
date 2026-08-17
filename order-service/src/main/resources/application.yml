@@ -49,7 +49,8 @@ seata:
 
 dubbo:
   application:
-    name: order-service
+    # 与 spring.application.name 区分开，避免 Dubbo 应用级实例与 Spring Cloud 注册同名冲突
+    name: order-service-dubbo
     qos-port: 22223
   registry:
     address: nacos://127.0.0.1:8848

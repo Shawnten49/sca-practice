@@ -48,7 +48,10 @@ management:
 
 dubbo:
   application:
-    name: stock-service
+    # 与 spring.application.name 区分开：Dubbo 3.x 应用级服务发现会按该名字向 Nacos
+    # 注册实例（端口 20880），若与 Spring Cloud 同名，Feign 负载均衡会轮询到 Dubbo 端口
+    # 导致"一次成功一次失败"（Invalid status(-1)）。Dubbo RPC 按接口发现，改名不影响调用。
+    name: stock-service-dubbo
     qos-port: 22222
   registry:
     address: nacos://127.0.0.1:8848
