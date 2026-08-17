@@ -5,8 +5,8 @@ import com.example.order.client.StockClient;
 import com.example.order.domain.Order;
 import com.example.order.mapper.OrderMapper;
 import org.apache.seata.common.util.IdWorker;
-import org.apache.seata.spring.annotation.GlobalTransactional;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class OrderService {
@@ -23,7 +23,9 @@ public class OrderService {
         this.idGenerator = idGenerator;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    // 显式指定 seataTransactionManager（BASE 数据源）：
+    // 本方法跨服务扣库存，需要 Seata 全局事务；配合 OrderMapper 走分片路由。
+    @Transactional("seataTransactionManager")
     public String createOrder(Long userId, Long productId, Integer count, boolean fail) {
         Long orderId = idGenerator.nextId();
         // 1) 本库插订单

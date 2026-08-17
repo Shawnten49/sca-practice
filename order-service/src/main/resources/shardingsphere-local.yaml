@@ -1,0 +1,39 @@
+# 本地事务专用 ShardingSphere 配置（5.5.3）：与 shardingsphere.yaml 完全相同的分片规则，
+# 唯一区别是事务模式为 LOCAL——不开启 Seata 全局事务，只提供物理库本地事务（commit/rollback）。
+# 用途：纯本地写操作（如 RocketMQ 事务消息监听器里插入订单）走这个数据源，
+# 避免为单服务原子性付出 Seata begin/commit + undo_log 的开销。
+dataSources:
+  ds0:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    jdbcUrl: jdbc:mysql://127.0.0.1:3306/seata_order?createDatabaseIfNotExist=true&useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: ""
+    maximumPoolSize: 10
+    minimumIdle: 2
+    connectionTimeout: 10000
+
+rules:
+  - !SINGLE
+    tables:
+      - "*.*"
+    defaultDataSource: ds0
+  - !SHARDING
+    tables:
+      orders:
+        actualDataNodes: ds0.orders_$->{0..3}
+        tableStrategy:
+          standard:
+            shardingColumn: id
+            shardingAlgorithmName: orders-id-mod-4
+    shardingAlgorithms:
+      orders-id-mod-4:
+        type: INLINE
+        props:
+          algorithm-expression: orders_$->{id % 4}
+
+transaction:
+  defaultType: LOCAL
+
+props:
+  sql-show: true   # 打印真实路由 SQL，验证阶段保留；确认无误后可关闭

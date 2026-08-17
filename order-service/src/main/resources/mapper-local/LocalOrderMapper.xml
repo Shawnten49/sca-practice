@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.order.dao.LocalOrderMapper">
+
+    <!-- 插入订单：id 由 IdWorker 预生成，显式插入。
+         本 SQL 只被 LOCAL 数据源（本地事务）使用，分片路由由 ShardingSphere 负责 -->
+    <insert id="insertOrder" parameterType="com.example.order.domain.Order">
+        INSERT INTO orders (id, user_id, product_id, count)
+        VALUES (#{id}, #{userId}, #{productId}, #{count})
+    </insert>
+
+</mapper>

@@ -3,16 +3,26 @@ package com.example.user.mqconsumer.canal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/** orders 表变更处理（key: seata_order.orders）。本期只输出日志验证链路。 */
+import java.util.Set;
+
+/**
+ * orders 分表变更处理（key: seata_order.orders_0 ~ orders_3）。
+ * ShardingSphere 分表后 binlog 事件携带的是物理表名，因此注册 4 个物理表 key。
+ * 本期只输出日志验证链路。
+ */
 @Slf4j
 @Component
 public class OrderHandler implements TableSyncHandler {
 
-    static final String KEY = "seata_order.orders";
+    static final Set<String> KEYS = Set.of(
+            "seata_order.orders_0",
+            "seata_order.orders_1",
+            "seata_order.orders_2",
+            "seata_order.orders_3");
 
     @Override
-    public String supportedKey() {
-        return KEY;
+    public Set<String> supportedKeys() {
+        return KEYS;
     }
 
     @Override

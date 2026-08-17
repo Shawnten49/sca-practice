@@ -252,7 +252,9 @@ MQ 消息 → 解析（JSON 或 Entry）→ 按 database.table 路由 → 分发
 
 核心设计：
 
-- `TableSyncHandler` 接口：一个表一个实现，`supportedKey()` 返回 `"database.table"`；
+- `TableSyncHandler` 接口：一个表一个实现，`supportedKeys()` 返回 `"database.table"` 集合；
+  分表场景（orders 分表后 binlog 表名为物理表）返回多个 key，如
+  `seata_order.orders_0 ~ orders_3`；
 - 路由表由 Spring 收集所有 Handler Bean 自动组装，**新增表监听只需加一个 Handler**，消费端零改动；
 - 异常策略：解析失败 → 记 error 跳过（畸形消息重试无意义）；Handler 业务异常 → 向上抛出交给 RocketMQ 重试。
 
@@ -261,8 +263,8 @@ MQ 消息 → 解析（JSON 或 Entry）→ 按 database.table 路由 → 分发
 ```java
 @Component
 public class UserHandler implements TableSyncHandler {
-    static final String KEY = "seata_user.users";
-    @Override public String supportedKey() { return KEY; }
+    static final Set<String> KEYS = Set.of("seata_user.users");
+    @Override public Set<String> supportedKeys() { return KEYS; }
     @Override public void handle(CanalMessage message) {
         log.info("收到表变更 {} type={} rows={} pkNames={} pos={}:{}",
                 message.routeKey(), message.type(),

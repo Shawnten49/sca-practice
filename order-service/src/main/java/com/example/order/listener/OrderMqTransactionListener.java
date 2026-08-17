@@ -1,6 +1,7 @@
 package com.example.order.listener;
 
 import com.example.dto.PointAddMessage;
+import com.example.order.dao.LocalOrderMapper;
 import com.example.order.domain.Order;
 import com.example.order.mapper.OrderMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RocketMQTransactionListener
@@ -20,32 +21,32 @@ public class OrderMqTransactionListener implements RocketMQLocalTransactionListe
 
     private static final Logger log = LoggerFactory.getLogger(OrderMqTransactionListener.class);
 
-    private final TransactionTemplate transactionTemplate;
+    /** 绑定 LOCAL 数据源的写入 mapper：配合 @Transactional("localTransactionManager") 明确不走 Seata。 */
+    private final LocalOrderMapper localOrderMapper;
     private final ObjectMapper objectMapper;
     private final OrderMapper orderMapper;
 
-    public OrderMqTransactionListener(TransactionTemplate transactionTemplate,
+    public OrderMqTransactionListener(LocalOrderMapper localOrderMapper,
                                       ObjectMapper objectMapper,
                                       OrderMapper orderMapper) {
-        this.transactionTemplate = transactionTemplate;
+        this.localOrderMapper = localOrderMapper;
         this.objectMapper = objectMapper;
         this.orderMapper = orderMapper;
     }
 
     @Override
+    @Transactional("localTransactionManager")
     public RocketMQLocalTransactionState executeLocalTransaction(Message msg, Object arg) {
         try {
             PointAddMessage body = objectMapper.readValue((byte[]) msg.getPayload(), PointAddMessage.class);
-            // 1. 本地事务：插入订单，且必须先提交（本地提交成功后才允许消费者看到消息）
-            transactionTemplate.execute(status -> {
-                orderMapper.insertOrder(Order.builder()
-                        .id(body.orderId())
-                        .userId(body.userId())
-                        .productId(body.productId())
-                        .count(body.count())
-                        .build());
-                return null;
-            });
+            // 1. 本地事务：插入订单（走 LOCAL 数据源，分片路由照常 orders → orders_0~3），
+            //    且必须先提交（本地提交成功后才允许消费者看到消息）
+            localOrderMapper.insertOrder(Order.builder()
+                    .id(body.orderId())
+                    .userId(body.userId())
+                    .productId(body.productId())
+                    .count(body.count())
+                    .build());
             // 2. 数据库已提交 → 提交半消息
             return RocketMQLocalTransactionState.COMMIT;
         } catch (Exception e) {

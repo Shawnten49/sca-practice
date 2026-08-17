@@ -6,10 +6,10 @@ import com.example.order.mapper.OrderMapper;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.apache.seata.common.util.IdWorker;
-import org.apache.seata.spring.annotation.GlobalTransactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class OrderDubboService {
@@ -31,11 +31,12 @@ public class OrderDubboService {
     }
 
     /**
-     * 全局事务（下单 + Dubbo 扣库存）。
+     * 全局事务（下单 + Dubbo 扣库存），由 ShardingSphere Seata 集成 +
+     * {@code @Transactional("seataTransactionManager")} 管理。
      * 注意：消息发送不能放在事务方法里——否则会出现"消息已发出、全局事务却回滚"的不一致。
      * 正确姿势：本方法返回（全局事务已提交）后，再由 controller 调 sendPaySuccessMessage。
      */
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional("seataTransactionManager")
     public String createOrder(Long userId, Long productId, Integer count, boolean fail) {
         Long orderId = ID_WORKER.nextId();
 

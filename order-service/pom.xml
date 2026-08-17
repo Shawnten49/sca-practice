@@ -46,6 +46,62 @@
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
         </dependency>
+        <!-- ShardingSphere-JDBC 5.5.x：orders 逻辑表 → orders_0~3 分表（id % 4 路由）
+             Spring Boot 集成方式：ShardingSphereDriver + jdbc:shardingsphere:classpath:shardingsphere.yaml；
+             shardingsphere-jdbc 只含驱动内核，分片规则核心需按插件显式引入 -->
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>shardingsphere-jdbc</artifactId>
+        </dependency>
+        <!-- ShardingSphere 5.5.x 官方 Seata AT 集成：
+             让 ShardingSphere 连接在 begin 时自动开启 Seata 全局事务，
+             从而支持 Spring @Transactional（官方明确禁止在分片数据源上使用 @GlobalTransactional） -->
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>shardingsphere-transaction-base-seata-at</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>shardingsphere-sharding-core</artifactId>
+        </dependency>
+        <!-- Hikari 数据源池元数据插件：5.5.x 将连接池识别拆为独立模块，缺它无法装配 jdbcUrl 等标准属性 -->
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>shardingsphere-infra-data-source-pool-hikari</artifactId>
+        </dependency>
+        <!-- 单机模式（Standalone）实现：driver 加载 YAML 后构建元数据上下文必需 -->
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>shardingsphere-standalone-mode-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>shardingsphere-standalone-mode-repository-memory</artifactId>
+        </dependency>
+        <!-- 权限规则（ALL_PERMITTED）与 MySQL 方言 SQL 解析：默认规则/方言对应的 SPI 实现模块 -->
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>shardingsphere-authority-simple</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>shardingsphere-parser-sql-engine-mysql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>shardingsphere-parser-sql-engine-sql92</artifactId>
+        </dependency>
+        <!-- jdbc:shardingsphere:classpath:xxx.yaml 的 classpath URL 支持 -->
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>shardingsphere-infra-url-classpath</artifactId>
+        </dependency>
+        <!-- ShardingSphere 的 SPI 注册表会预加载全部分布式事务 provider（含 XA），
+             xa-core 编译时引用的 javax.transaction.* 不在 JDK 11+ 中，必须显式补齐 JTA API -->
+        <dependency>
+            <groupId>javax.transaction</groupId>
+            <artifactId>javax.transaction-api</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
@@ -62,6 +118,14 @@
         <dependency>
             <groupId>org.apache.seata</groupId>
             <artifactId>seata-spring-boot-starter</artifactId>
+            <!-- 官方要求排除 seata-all 传递的旧版 antlr4-runtime(4.8)，
+                 ShardingSphere 解析引擎需要 4.13.x -->
+            <exclusions>
+                <exclusion>
+                    <groupId>org.antlr</groupId>
+                    <artifactId>antlr4-runtime</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>

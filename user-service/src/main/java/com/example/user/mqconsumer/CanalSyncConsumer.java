@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.AbstractMap;
 import java.util.stream.Collectors;
 
 /**
@@ -45,9 +45,12 @@ public class CanalSyncConsumer implements RocketMQListener<MessageExt> {
         this.packetParser = packetParser;
         this.eventConverter = eventConverter;
         this.idempotencyFacade = idempotencyFacade;
-        // 路由表由 Spring 收集的 Handler Bean 自动组装：新增表监听只需加一个 Handler
+        // 路由表由 Spring 收集的 Handler Bean 自动组装：新增表监听只需加一个 Handler；
+        // 分表 Handler 返回多个物理表 key，这里展平为 key → Handler 映射
         this.handlers = handlerList.stream()
-                .collect(Collectors.toMap(TableSyncHandler::supportedKey, Function.identity()));
+                .flatMap(handler -> handler.supportedKeys().stream()
+                        .map(key -> new AbstractMap.SimpleImmutableEntry<>(key, handler)))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     @Override

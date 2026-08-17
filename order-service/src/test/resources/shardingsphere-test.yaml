@@ -1,0 +1,31 @@
+# 分片路由测试专用配置：物理表为 H2 内存库 orders_0 ~ orders_3（由测试代码先建表）
+dataSources:
+  ds0:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: org.h2.Driver
+    jdbcUrl: jdbc:h2:mem:order_shard_test;MODE=MySQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+    maximumPoolSize: 5
+
+rules:
+  - !SINGLE
+    tables:
+      - "*.*"
+    defaultDataSource: ds0
+  - !SHARDING
+    tables:
+      orders:
+        actualDataNodes: ds0.orders_$->{0..3}
+        tableStrategy:
+          standard:
+            shardingColumn: id
+            shardingAlgorithmName: orders-id-mod-4
+    shardingAlgorithms:
+      orders-id-mod-4:
+        type: INLINE
+        props:
+          algorithm-expression: orders_$->{id % 4}
+
+props:
+  sql-show: true

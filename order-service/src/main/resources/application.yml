@@ -8,22 +8,32 @@ spring:
     enabled: true
     baseline-on-migrate: true
     baseline-version: 0
+    # Flyway 直连物理库执行 DDL（分片表 orders_0~3 由它创建），不走 ShardingSphere 逻辑表路由
+    url: jdbc:mysql://127.0.0.1:3306/seata_order?useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    user: root
+    password: ""
   cloud:
     nacos:
       discovery:
         server-addr: 127.0.0.1:8848
-  datasource:
-    url: jdbc:mysql://127.0.0.1:3306/seata_order?createDatabaseIfNotExist=true&useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai
-    username: root
-    password: ""
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 2
-      connection-timeout: 10000
+  # 双数据源（见 OrderDataSourceConfig）：
+  #   dataSource       → shardingsphere.yaml（BASE），seataTransactionManager
+  #   localDataSource  → shardingsphere-local.yaml（LOCAL），localTransactionManager
+  # 事务注解约定（注解即显式）：
+  #   @Transactional("seataTransactionManager") → Seata 全局事务（配 OrderMapper）
+  #   @Transactional("localTransactionManager") → 本地事务，不走 Seata（配 LocalOrderMapper）
+  # Mapper 按包绑定（见 OrderDataSourceConfig 的 @MapperScan）：
+  #   com.example.order.mapper → BASE 数据源；com.example.order.dao → LOCAL 数据源
+  # 新增本地 mapper：接口放 com.example.order.dao，XML 放 resources/mapper-local/ 即可自动注册
+  # 不再使用 spring.datasource 自动装配，避免与两个数据源冲突。
 
 seata:
   tx-service-group: seata_tx_group
+  # 关键：禁止 Seata 把 ShardingSphereDataSource 包成 DataSourceProxy。
+  # 否则 AT 模式会用 JDBC DatabaseMetaData 查逻辑表 orders 的元数据，
+  # 而 ShardingSphere 元数据里只有 orders_0~3，导致 "Failed to fetch schema of orders"。
+  # 分片库的全局事务改由 ShardingSphere 官方 Seata 集成管理（shardingsphere-transaction-base-seata-at）。
+  enable-auto-data-source-proxy: false
   registry:
     type: nacos
     nacos:

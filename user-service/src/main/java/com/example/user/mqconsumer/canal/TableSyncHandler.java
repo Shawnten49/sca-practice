@@ -1,12 +1,15 @@
 package com.example.user.mqconsumer.canal;
 
+import java.util.Set;
+
 /**
- * 单表变更处理器：一个表一个实现，路由 key 为 "database.table"。
+ * 表变更处理器：一个表一个实现，路由 key 为 "database.table"。
+ * 分表场景（如 orders_0~3）可返回多个物理表 key，Consumer 会按物理表名精确分发。
  */
 public interface TableSyncHandler {
 
-    /** 路由 key，例如 "seata_user.users"。 */
-    String supportedKey();
+    /** 路由 key 集合，例如 "seata_user.users"，分表为 "seata_order.orders_0" ~ "orders_3"。 */
+    Set<String> supportedKeys();
 
     /**
      * 是否天然幂等（删缓存 / upsert / 日志类）：默认 true，Consumer 直接执行、不去重；

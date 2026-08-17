@@ -1,5 +1,7 @@
 package com.example.order.listener;
 
+import com.example.dto.PointAddMessage;
+import com.example.order.dao.LocalOrderMapper;
 import com.example.order.domain.Order;
 import com.example.order.mapper.OrderMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,21 +10,24 @@ import org.apache.rocketmq.spring.support.RocketMQHeaders;
 import org.junit.jupiter.api.Test;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class OrderMqTransactionListenerTest {
 
-    private final TransactionTemplate transactionTemplate = mock(TransactionTemplate.class);
+    private final LocalOrderMapper localOrderMapper = mock(LocalOrderMapper.class);
     private final ObjectMapper objectMapper = mock(ObjectMapper.class);
     private final OrderMapper orderMapper = mock(OrderMapper.class);
     private final OrderMqTransactionListener listener =
-            new OrderMqTransactionListener(transactionTemplate, objectMapper, orderMapper);
+            new OrderMqTransactionListener(localOrderMapper, objectMapper, orderMapper);
 
     private Message<String> messageWithOrderId(String orderId) {
         return MessageBuilder.withPayload("payload")
@@ -59,5 +64,24 @@ class OrderMqTransactionListenerTest {
 
         assertThat(listener.checkLocalTransaction(messageWithOrderId("123")))
                 .isEqualTo(RocketMQLocalTransactionState.UNKNOWN);
+    }
+
+    @Test
+    void executesLocalInsertViaLocalOrderMapper() throws Exception {
+        PointAddMessage body = new PointAddMessage(123L, 1L, 1L, 2, 200);
+        when(objectMapper.readValue(any(byte[].class), eq(PointAddMessage.class))).thenReturn(body);
+
+        Message<byte[]> message = MessageBuilder.withPayload(new byte[0])
+                .setHeader(RocketMQHeaders.PREFIX + RocketMQHeaders.KEYS, "123")
+                .build();
+
+        assertThat(listener.executeLocalTransaction(message, null))
+                .isEqualTo(RocketMQLocalTransactionState.COMMIT);
+        // 写入走 LocalOrderMapper（LOCAL 数据源），由 @Transactional("localTransactionManager") 保证本地原子性
+        verify(localOrderMapper).insertOrder(argThat(order ->
+                order.getId() == 123L
+                        && order.getUserId() == 1L
+                        && order.getProductId() == 1L
+                        && order.getCount() == 2));
     }
 }

@@ -16,6 +16,7 @@ import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 
 import java.util.List;
+import java.util.Set;
 
 import static com.example.user.mqconsumer.canal.CanalTestMessages.col;
 import static com.example.user.mqconsumer.canal.CanalTestMessages.message;
@@ -88,7 +89,7 @@ class CanalSyncConsumerTest {
 
     @Test
     void routesOrderTableEventToOrderHandler(CapturedOutput output) {
-        CanalEntry.Entry entry = rowEntry("seata_order", "orders", CanalEntry.EventType.UPDATE,
+        CanalEntry.Entry entry = rowEntry("seata_order", "orders_1", CanalEntry.EventType.UPDATE,
                 "mysql-bin.000002", 5678L,
                 List.of(row(
                         List.of(col("id", "4", true), col("count", "2", false)),
@@ -96,7 +97,7 @@ class CanalSyncConsumerTest {
 
         consumerWithRealHandlers.onMessage(messageExt(entry));
 
-        assertThat(output).contains("seata_order.orders", "type=UPDATE", "rows=1");
+        assertThat(output).contains("seata_order.orders_1", "type=UPDATE", "rows=1");
     }
 
     @Test
@@ -136,10 +137,14 @@ class CanalSyncConsumerTest {
     void dispatchesBySupportedKeyUsingRouteTable() {
         TableSyncHandler user = mock(TableSyncHandler.class);
         TableSyncHandler order = mock(TableSyncHandler.class);
-        when(user.supportedKey()).thenReturn("seata_user.users");
+        when(user.supportedKeys()).thenReturn(Set.of("seata_user.users"));
         when(user.idempotent()).thenReturn(true);
         when(user.shouldHandle(any())).thenReturn(true);
-        when(order.supportedKey()).thenReturn("seata_order.orders");
+        when(order.supportedKeys()).thenReturn(Set.of(
+                "seata_order.orders_0",
+                "seata_order.orders_1",
+                "seata_order.orders_2",
+                "seata_order.orders_3"));
         CanalSyncConsumer consumer = new CanalSyncConsumer(new CanalPacketParser(), new CanalEventConverter(),
                 List.of(user, order), mock(IdempotencyFacade.class));
 
@@ -155,7 +160,7 @@ class CanalSyncConsumerTest {
     @Test
     void nonIdempotentHandlerGoesThroughDedupFacadeWithRowKey() {
         TableSyncHandler orderItems = mock(TableSyncHandler.class);
-        when(orderItems.supportedKey()).thenReturn("seata_order.order_items");
+        when(orderItems.supportedKeys()).thenReturn(Set.of("seata_order.order_items"));
         when(orderItems.idempotent()).thenReturn(false);
         when(orderItems.shouldHandle(any())).thenReturn(true);
         IdempotencyFacade facade = mock(IdempotencyFacade.class);

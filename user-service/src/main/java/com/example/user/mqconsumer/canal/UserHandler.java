@@ -3,12 +3,14 @@ package com.example.user.mqconsumer.canal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.Set;
+
 /** users 表变更处理（key: seata_user.users）。本期只输出日志验证链路。 */
 @Slf4j
 @Component
 public class UserHandler implements TableSyncHandler {
 
-    static final String KEY = "seata_user.users";
+    static final Set<String> KEYS = Set.of("seata_user.users");
 
     private final FieldChangeFilter fieldChangeFilter;
 
@@ -17,8 +19,8 @@ public class UserHandler implements TableSyncHandler {
     }
 
     @Override
-    public String supportedKey() {
-        return KEY;
+    public Set<String> supportedKeys() {
+        return KEYS;
     }
 
     @Override

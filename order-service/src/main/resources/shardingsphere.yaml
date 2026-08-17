@@ -1,0 +1,44 @@
+# ShardingSphere-JDBC 分片配置（5.5.3，经 ShardingSphereDriver 加载）
+# orders 逻辑表 → seata_order 库内 orders_0 ~ orders_3，按 id % 4 路由；
+# 物理表 DDL 由 Flyway 直连 MySQL 管理（V2__shard_orders.sql），此处只负责路由。
+dataSources:
+  ds0:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    jdbcUrl: jdbc:mysql://127.0.0.1:3306/seata_order?createDatabaseIfNotExist=true&useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: ""
+    maximumPoolSize: 10
+    minimumIdle: 2
+    connectionTimeout: 10000
+
+rules:
+  # 未配置分片的表（如 Seata 的 undo_log、Flyway 历史表）由 single 规则管理，
+  # 缺失会导致任何访问抛出 TableNotFoundException（5.5.x 不会自动发现未声明表）
+  - !SINGLE
+    tables:
+      - "*.*"
+    defaultDataSource: ds0
+  - !SHARDING
+    tables:
+      orders:
+        actualDataNodes: ds0.orders_$->{0..3}
+        tableStrategy:
+          standard:
+            shardingColumn: id
+            shardingAlgorithmName: orders-id-mod-4
+    shardingAlgorithms:
+      orders-id-mod-4:
+        type: INLINE
+        props:
+          algorithm-expression: orders_$->{id % 4}
+
+# Seata AT 集成（官方 5.5.3）：事务默认走 BASE 类型、由 Seata 提供，
+# 配合 shardingsphere-transaction-base-seata-at 依赖与 classpath 下的 seata.conf。
+# 业务方法用 Spring @Transactional 即可自动开启/提交/回滚 Seata 全局事务。
+transaction:
+  defaultType: BASE
+  providerType: Seata
+
+props:
+  sql-show: true   # 打印真实路由 SQL，验证阶段保留；确认无误后可关闭
