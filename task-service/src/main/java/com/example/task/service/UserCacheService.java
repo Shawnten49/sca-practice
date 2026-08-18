@@ -20,12 +20,15 @@ public class UserCacheService {
     private final UserMapper userMapper;
     private final TaskCacheWriter cacheWriter;
     private final TaskProperties properties;
+    private final UserConverter userConverter;
 
     public UserCacheService(UserMapper userMapper, TaskCacheWriter cacheWriter,
-                            TaskProperties properties) {
+                            TaskProperties properties,
+                             UserConverter userConverter) {
         this.userMapper = userMapper;
         this.cacheWriter = cacheWriter;
         this.properties = properties;
+        this.userConverter = userConverter;
     }
 
     /** 刷新全部用户，返回本实例处理的总条数。 */

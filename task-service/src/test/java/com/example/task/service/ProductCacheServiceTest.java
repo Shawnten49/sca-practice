@@ -3,6 +3,7 @@ package com.example.task.service;
 import com.example.task.config.TaskProperties;
 import com.example.task.mapper.ProductMapper;
 import com.example.entity.Product;
+import com.example.task.converter.ProductConverter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -39,7 +40,7 @@ class ProductCacheServiceTest {
         when(productMapper.selectRecentByShard(any(), eq(2L), eq(1), eq(2), eq(2)))
                 .thenReturn(List.of(product(3L)));
 
-        ProductCacheService service = new ProductCacheService(productMapper, cacheWriter, properties);
+        ProductCacheService service = new ProductCacheService(productMapper, cacheWriter, properties, ProductConverter.INSTANCE);
         long total = service.refreshRecent(1, 2);
 
         assertThat(total).isEqualTo(3);

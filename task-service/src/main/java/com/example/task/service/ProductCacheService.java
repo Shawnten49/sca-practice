@@ -21,12 +21,15 @@ public class ProductCacheService {
     private final ProductMapper productMapper;
     private final TaskCacheWriter cacheWriter;
     private final TaskProperties properties;
+    private final ProductConverter productConverter;
 
     public ProductCacheService(ProductMapper productMapper, TaskCacheWriter cacheWriter,
-                               TaskProperties properties) {
+                               TaskProperties properties,
+                               ProductConverter productConverter) {
         this.productMapper = productMapper;
         this.cacheWriter = cacheWriter;
         this.properties = properties;
+        this.productConverter = productConverter;
     }
 
     /** 刷新最近 N 天商品，返回本实例处理的总条数。 */

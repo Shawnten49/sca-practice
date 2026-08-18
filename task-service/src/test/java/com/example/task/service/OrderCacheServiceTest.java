@@ -3,6 +3,7 @@ package com.example.task.service;
 import com.example.task.config.TaskProperties;
 import com.example.task.mapper.OrderShardMapper;
 import com.example.entity.Order;
+import com.example.task.converter.OrderConverter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -47,7 +48,7 @@ class OrderCacheServiceTest {
         when(orderShardMapper.selectRecent(eq("orders_0"), any(), eq(2L), eq(2)))
                 .thenReturn(List.of(order(3L)));
 
-        OrderCacheService service = new OrderCacheService(orderShardMapper, cacheWriter, properties);
+        OrderCacheService service = new OrderCacheService(orderShardMapper, cacheWriter, properties, OrderConverter.INSTANCE);
         long total = service.refreshRecent(0, 1);
 
         assertThat(total).isEqualTo(3);
@@ -62,7 +63,7 @@ class OrderCacheServiceTest {
         when(orderShardMapper.selectRecent(anyString(), any(), anyLong(), anyInt()))
                 .thenReturn(List.of());
 
-        OrderCacheService service = new OrderCacheService(orderShardMapper, cacheWriter, properties);
+        OrderCacheService service = new OrderCacheService(orderShardMapper, cacheWriter, properties, OrderConverter.INSTANCE);
         service.refreshRecent(1, 4);
 
         verify(orderShardMapper).selectRecent(eq("orders_1"), any(), anyLong(), anyInt());

@@ -21,12 +21,15 @@ public class OrderCacheService {
     private final OrderShardMapper orderShardMapper;
     private final TaskCacheWriter cacheWriter;
     private final TaskProperties properties;
+    private final OrderConverter orderConverter;
 
     public OrderCacheService(OrderShardMapper orderShardMapper, TaskCacheWriter cacheWriter,
-                             TaskProperties properties) {
+                             TaskProperties properties,
+                             OrderConverter orderConverter) {
         this.orderShardMapper = orderShardMapper;
         this.cacheWriter = cacheWriter;
         this.properties = properties;
+        this.orderConverter = orderConverter;
     }
 
     /** 刷新最近 N 天订单，返回本实例处理的总条数。 */

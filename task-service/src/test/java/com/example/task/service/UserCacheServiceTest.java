@@ -3,6 +3,7 @@ package com.example.task.service;
 import com.example.task.config.TaskProperties;
 import com.example.task.mapper.UserMapper;
 import com.example.entity.User;
+import com.example.task.converter.UserConverter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -38,7 +39,7 @@ class UserCacheServiceTest {
         when(userMapper.selectByShard(2L, 0, 1, 2))
                 .thenReturn(List.of(user(3L)));
 
-        UserCacheService service = new UserCacheService(userMapper, cacheWriter, properties);
+        UserCacheService service = new UserCacheService(userMapper, cacheWriter, properties, UserConverter.INSTANCE);
         long total = service.refreshAll(0, 1);
 
         assertThat(total).isEqualTo(3);
