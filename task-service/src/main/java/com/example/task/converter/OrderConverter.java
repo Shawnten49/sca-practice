@@ -1,7 +1,7 @@
 package com.example.task.converter;
 
 import com.example.dto.OrderDTO;
-import com.example.task.entity.Order;
+import com.example.entity.Order;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 

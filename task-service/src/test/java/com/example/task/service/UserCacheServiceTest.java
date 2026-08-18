@@ -2,7 +2,7 @@ package com.example.task.service;
 
 import com.example.task.config.TaskProperties;
 import com.example.task.mapper.UserMapper;
-import com.example.task.entity.User;
+import com.example.entity.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -46,6 +46,6 @@ class UserCacheServiceTest {
     }
 
     private static User user(long id) {
-        return new User(id, "u" + id, 10, LocalDateTime.of(2026, 8, 18, 10, 0));
+        return new User(id, "u" + id, 10, 0, "", LocalDateTime.of(2026, 8, 18, 10, 0));
     }
 }

@@ -1,6 +1,6 @@
 package com.example.task.mapper;
 
-import com.example.task.entity.Product;
+import com.example.entity.Product;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.jupiter.api.Test;

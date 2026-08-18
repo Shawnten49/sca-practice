@@ -1,8 +1,8 @@
 package com.example.stock.mqconsumer;
 
-import com.example.stock.mqconsumer.canal.CanalEvent;
+import com.example.dto.canal.CanalEvent;
 import com.example.stock.mqconsumer.canal.CanalEventConverter;
-import com.example.stock.mqconsumer.canal.CanalMessage;
+import com.example.dto.canal.CanalMessage;
 import com.example.stock.mqconsumer.canal.CanalPacketParser;
 import com.example.stock.mqconsumer.canal.TableSyncHandler;
 import lombok.extern.slf4j.Slf4j;

@@ -2,7 +2,7 @@ package com.example.order.service;
 
 import com.example.id.IdGenerator;
 import com.example.order.client.StockClient;
-import com.example.order.entity.Order;
+import com.example.entity.Order;
 import com.example.order.mapper.OrderMapper;
 import org.apache.seata.common.util.IdWorker;
 import org.springframework.stereotype.Service;

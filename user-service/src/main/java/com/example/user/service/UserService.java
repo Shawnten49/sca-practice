@@ -7,7 +7,7 @@ import com.example.exception.ErrorCode;
 import com.example.id.SnowflakeIdGenerator;
 import com.example.user.converter.UserConverter;
 import com.example.user.dto.response.UserResponse;
-import com.example.user.entity.User;
+import com.example.entity.User;
 import com.example.user.mapper.UserMapper;
 import org.springframework.stereotype.Service;
 

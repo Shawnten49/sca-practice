@@ -2,7 +2,7 @@ package com.example.order.service;
 
 import com.example.api.StockDubboService;
 import com.example.api.dto.StockDeductResult;
-import com.example.order.entity.Order;
+import com.example.entity.Order;
 import com.example.order.mapper.OrderMapper;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;

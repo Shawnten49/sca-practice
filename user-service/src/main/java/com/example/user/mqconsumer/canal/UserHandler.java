@@ -1,4 +1,6 @@
 package com.example.user.mqconsumer.canal;
+import com.example.dto.canal.CanalEvent;
+import com.example.dto.canal.CanalMessage;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

@@ -1,7 +1,7 @@
 package com.example.task.converter;
 
 import com.example.dto.UserDTO;
-import com.example.task.entity.User;
+import com.example.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 

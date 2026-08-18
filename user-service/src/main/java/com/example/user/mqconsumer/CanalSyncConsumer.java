@@ -1,8 +1,8 @@
 package com.example.user.mqconsumer;
 
-import com.example.user.mqconsumer.canal.CanalEvent;
+import com.example.dto.canal.CanalEvent;
 import com.example.user.mqconsumer.canal.CanalEventConverter;
-import com.example.user.mqconsumer.canal.CanalMessage;
+import com.example.dto.canal.CanalMessage;
 import com.example.user.mqconsumer.canal.CanalPacketParser;
 import com.example.user.mqconsumer.canal.IdempotencyFacade;
 import com.example.user.mqconsumer.canal.TableSyncHandler;

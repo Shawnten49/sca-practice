@@ -1,4 +1,6 @@
 package com.example.stock.mqconsumer.canal;
+import com.example.dto.canal.CanalEvent;
+import com.example.dto.canal.CanalMessage;
 
 import com.example.stock.es.ProductDocument;
 import com.example.stock.es.ProductRepository;

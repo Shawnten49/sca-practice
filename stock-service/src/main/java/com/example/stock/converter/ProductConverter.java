@@ -1,7 +1,7 @@
 package com.example.stock.converter;
 
 import com.example.stock.dto.response.ProductResponse;
-import com.example.stock.entity.Product;
+import com.example.entity.Product;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 

@@ -1,4 +1,4 @@
-package com.example.user.entity;
+package com.example.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * 用户实体（MyBatis-Plus）。
+ * 用户实体（MyBatis-Plus，跨服务共享：user-service 读写、task-service 缓存投影复用）。
  * id 由调用方预生成（IdType.INPUT）；points 为积分、credits 为信用点，均为冗余汇总字段。
  */
 @Data

@@ -1,7 +1,7 @@
 package com.example.user.converter;
 
 import com.example.user.dto.response.UserResponse;
-import com.example.user.entity.User;
+import com.example.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 

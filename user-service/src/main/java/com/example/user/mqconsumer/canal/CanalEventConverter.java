@@ -1,4 +1,6 @@
 package com.example.user.mqconsumer.canal;
+import com.example.dto.canal.CanalEvent;
+import com.example.dto.canal.CanalMessage;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.alibaba.otter.canal.protocol.Message;

@@ -1,4 +1,4 @@
-package com.example.order.entity;
+package com.example.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -11,9 +11,9 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * 订单实体（MyBatis-Plus）。
- * id 由 IdWorker 预生成后显式插入（IdType.INPUT），不依赖数据库自增；
- * createTime 只读映射，不参与 insert，由数据库 DEFAULT CURRENT_TIMESTAMP 填充。
+ * 订单实体（MyBatis-Plus，跨服务共享：order-service 经 ShardingSphere 逻辑表路由，
+ * task-service 直接按物理分片表 orders_0~3 缓存投影复用）。
+ * id 由 IdWorker 预生成后显式插入（IdType.INPUT）；createTime 由数据库默认值填充。
  */
 @Data
 @Builder

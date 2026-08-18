@@ -2,7 +2,7 @@ package com.example.user.service;
 
 import com.example.exception.BusinessException;
 import com.example.user.config.CreditsProperties;
-import com.example.user.entity.User;
+import com.example.entity.User;
 import com.example.user.dto.response.CreditsResponse;
 import com.example.user.mapper.UserMapper;
 import org.junit.jupiter.api.BeforeEach;

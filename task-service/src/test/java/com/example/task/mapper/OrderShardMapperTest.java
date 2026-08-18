@@ -1,6 +1,6 @@
 package com.example.task.mapper;
 
-import com.example.task.entity.Order;
+import com.example.entity.Order;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.jupiter.api.Test;

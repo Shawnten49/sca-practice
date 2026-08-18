@@ -6,7 +6,7 @@ import com.example.id.SnowflakeIdGenerator;
 import com.example.stock.converter.ProductConverter;
 import com.example.stock.dto.request.ProductCreateRequest;
 import com.example.stock.dto.response.ProductResponse;
-import com.example.stock.entity.Product;
+import com.example.entity.Product;
 import com.example.stock.es.ProductDocument;
 import com.example.stock.mapper.ProductMapper;
 import lombok.extern.slf4j.Slf4j;

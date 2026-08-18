@@ -1,4 +1,4 @@
-package com.example.stock.entity;
+package com.example.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -12,9 +12,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * 商品实体（MyBatis-Plus）。
+ * 商品实体（MyBatis-Plus，跨服务共享：stock-service 读写、task-service 缓存投影复用）。
  * id 由调用方预生成（雪花 ID，IdType.INPUT）；数据权威在 MySQL，
- * 由 Canal 异步同步到 ES 作为查询副本（见 es.ProductDocument）。
+ * 由 Canal 异步同步到 ES 作为查询副本（见 stock-service es.ProductDocument）。
  */
 @Data
 @Builder

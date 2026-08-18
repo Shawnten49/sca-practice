@@ -4,7 +4,7 @@ import com.example.task.config.TaskProperties;
 import com.example.task.mapper.OrderShardMapper;
 import com.example.dto.OrderDTO;
 import com.example.task.converter.OrderConverter;
-import com.example.task.entity.Order;
+import com.example.entity.Order;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

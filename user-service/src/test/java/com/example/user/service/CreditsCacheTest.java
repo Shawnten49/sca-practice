@@ -1,7 +1,7 @@
 package com.example.user.service;
 
 import com.alicp.jetcache.CacheManager;
-import com.example.user.entity.User;
+import com.example.entity.User;
 import com.example.user.mapper.UserMapper;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RedissonClient;

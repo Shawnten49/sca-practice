@@ -1,4 +1,6 @@
 package com.example.user.mqconsumer.canal;
+import com.example.dto.canal.CanalEvent;
+import com.example.dto.canal.CanalMessage;
 
 import java.util.Set;
 

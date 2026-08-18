@@ -1,4 +1,4 @@
-package com.example.stock.mqconsumer.canal;
+package com.example.dto.canal;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Canal 投递到 MQ 的 binlog 变更事件。
- * 字段与 Canal flatMessage JSON 对齐（database/table/type/data/old/isDdl/logFileName/logFileOffset...），
+ * Canal 投递到 MQ 的 binlog 变更事件（跨服务共享：user-service / stock-service 消费）。
+ * 字段与 Canal JSON 对齐（database/table/type/data/old/isDdl/logFileName/logFileOffset...），
  * mysqlType/sqlType 等不关心的字段通过 ignoreUnknown 忽略。
  */
 @JsonIgnoreProperties(ignoreUnknown = true)

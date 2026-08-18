@@ -1,7 +1,7 @@
 package com.example.task.mapper;
 
 import com.baomidou.dynamic.datasource.annotation.DS;
-import com.example.task.entity.Order;
+import com.example.entity.Order;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
