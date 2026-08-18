@@ -2,7 +2,7 @@ package com.example.order.listener;
 
 import com.example.dto.PointAddMessage;
 import com.example.order.dao.LocalOrderMapper;
-import com.example.order.domain.Order;
+import com.example.order.entity.Order;
 import com.example.order.mapper.OrderMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.rocketmq.spring.core.RocketMQLocalTransactionState;

@@ -1,7 +1,7 @@
 package com.example.stock.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.example.stock.domain.Product;
+import com.example.stock.entity.Product;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

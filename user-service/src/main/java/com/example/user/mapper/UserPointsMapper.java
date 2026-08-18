@@ -1,7 +1,7 @@
 package com.example.user.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.example.user.domain.UserPoints;
+import com.example.user.entity.UserPoints;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.Optional;

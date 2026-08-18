@@ -5,7 +5,7 @@ import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.example.exception.BusinessException;
 import com.example.exception.ErrorCode;
 import com.example.id.SnowflakeIdGenerator;
-import com.example.user.domain.User;
+import com.example.user.entity.User;
 import com.example.user.mapper.UserMapper;
 import org.springframework.stereotype.Service;
 

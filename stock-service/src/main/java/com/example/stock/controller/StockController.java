@@ -1,6 +1,8 @@
 package com.example.stock.controller;
 
-import com.example.stock.domain.Stock;
+import com.example.common.Result;
+import com.example.stock.converter.StockConverter;
+import com.example.stock.dto.response.StockResponse;
 import com.example.stock.service.StockService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -24,7 +26,7 @@ public class StockController {
     }
 
     @GetMapping("/stock/query")
-    public Stock query(@RequestParam Long productId) {
-        return stockService.query(productId);
+    public Result<StockResponse> query(@RequestParam Long productId) {
+        return Result.ok(StockConverter.toResponse(stockService.query(productId)));
     }
 }

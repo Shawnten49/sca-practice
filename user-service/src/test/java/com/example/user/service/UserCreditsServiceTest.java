@@ -2,8 +2,8 @@ package com.example.user.service;
 
 import com.example.exception.BusinessException;
 import com.example.user.config.CreditsProperties;
-import com.example.user.domain.User;
-import com.example.user.dto.CreditsVO;
+import com.example.user.entity.User;
+import com.example.user.dto.response.CreditsResponse;
 import com.example.user.mapper.UserMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,7 +34,7 @@ class UserCreditsServiceTest {
     void getCreditsReturnsCredits() {
         when(creditsCache.getWithMutex(1L)).thenReturn(100);
 
-        CreditsVO vo = service.getCredits(1L);
+        CreditsResponse vo = service.getCredits(1L);
 
         assertThat(vo.userId()).isEqualTo(1L);
         assertThat(vo.credits()).isEqualTo(100);
@@ -62,7 +62,7 @@ class UserCreditsServiceTest {
         when(userMapper.increaseCredits(1L, 100)).thenReturn(1);
         when(creditsCache.getWithMutex(1L)).thenReturn(200);
 
-        CreditsVO vo = service.updateCredits(1L, 100);
+        CreditsResponse vo = service.updateCredits(1L, 100);
 
         assertThat(vo.credits()).isEqualTo(200);
         verify(creditsCache).invalidate(1L);

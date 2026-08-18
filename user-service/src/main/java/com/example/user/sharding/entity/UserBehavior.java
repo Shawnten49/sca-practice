@@ -1,4 +1,4 @@
-package com.example.user.sharding.domain;
+package com.example.user.sharding.entity;
 
 import lombok.Data;
 

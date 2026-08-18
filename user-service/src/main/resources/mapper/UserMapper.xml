@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.user.mapper.UserMapper">
 
-    <select id="selectUserById" resultType="com.example.user.domain.User">
+    <select id="selectUserById" resultType="com.example.user.entity.User">
         SELECT id, nickname, points, credits, id_card, create_time
         FROM users
         WHERE id = #{id}
@@ -10,7 +10,7 @@
 
     <!-- id_card 为逻辑列（无物理列），由 ShardingSphere !ENCRYPT 改写为 id_card_cipher 密文列；
          create_time 不写入，由 DB 默认值 CURRENT_TIMESTAMP 填充 -->
-    <insert id="insertUser" parameterType="com.example.user.domain.User">
+    <insert id="insertUser" parameterType="com.example.user.entity.User">
         INSERT INTO users (id, nickname, points, credits, id_card)
         VALUES (#{id}, #{nickname}, #{points}, #{credits}, #{idCard})
     </insert>

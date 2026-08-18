@@ -3,9 +3,9 @@ package com.example.user.service;
 import com.example.exception.BusinessException;
 import com.example.user.config.PointsCacheEvictQueue;
 import com.example.user.config.PointsCacheProperties;
-import com.example.user.domain.PointsValue;
-import com.example.user.domain.User;
-import com.example.user.dto.PointsVO;
+import com.example.user.entity.PointsValue;
+import com.example.user.entity.User;
+import com.example.user.dto.response.PointsResponse;
 import com.example.user.mapper.UserMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -69,7 +69,7 @@ class UserPointsServiceTest {
     void caffeineHitReturnsWithoutRedisOrDb() {
         caffeine.put(1L, PointsValue.of(300));
 
-        PointsVO vo = service.getPoints(1L);
+        PointsResponse vo = service.getPoints(1L);
 
         assertThat(vo.points()).isEqualTo(300);
         verify(userMapper, never()).selectUserById(any());
@@ -79,7 +79,7 @@ class UserPointsServiceTest {
     void redisHitFillsCaffeineWithoutDb() {
         when(valueOps.get("user:points:1")).thenReturn("200");
 
-        PointsVO vo = service.getPoints(1L);
+        PointsResponse vo = service.getPoints(1L);
 
         assertThat(vo.points()).isEqualTo(200);
         assertThat(caffeine.getIfPresent(1L).points()).isEqualTo(200);
@@ -92,7 +92,7 @@ class UserPointsServiceTest {
         when(userMapper.selectUserById(1L))
                 .thenReturn(Optional.of(User.builder().id(1L).nickname("demo").points(100).build()));
 
-        PointsVO vo = service.getPoints(1L);
+        PointsResponse vo = service.getPoints(1L);
 
         assertThat(vo.points()).isEqualTo(100);
         assertThat(caffeine.getIfPresent(1L).points()).isEqualTo(100);
@@ -119,7 +119,7 @@ class UserPointsServiceTest {
         // 第一次读 Redis miss，50ms 后重读命中（其他线程已回填）
         when(valueOps.get("user:points:1")).thenReturn(null, "500");
 
-        PointsVO vo = service.getPoints(1L);
+        PointsResponse vo = service.getPoints(1L);
 
         assertThat(vo.points()).isEqualTo(500);
         assertThat(caffeine.getIfPresent(1L).points()).isEqualTo(500);
@@ -133,7 +133,7 @@ class UserPointsServiceTest {
         when(userMapper.selectUserById(1L))
                 .thenReturn(Optional.of(User.builder().id(1L).nickname("demo").points(200).build()));
 
-        PointsVO vo = service.updatePoints(1L, 100);
+        PointsResponse vo = service.updatePoints(1L, 100);
 
         assertThat(vo.points()).isEqualTo(200);
         assertThat(caffeine.getIfPresent(1L).points()).isEqualTo(200);

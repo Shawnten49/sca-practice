@@ -8,7 +8,7 @@
         WHERE product_id = #{productId} AND quantity &gt;= #{count}
     </update>
 
-    <select id="selectStockByProductId" resultType="com.example.stock.domain.Stock">
+    <select id="selectStockByProductId" resultType="com.example.stock.entity.Stock">
         SELECT id, product_id, quantity
         FROM stock
         WHERE product_id = #{productId}

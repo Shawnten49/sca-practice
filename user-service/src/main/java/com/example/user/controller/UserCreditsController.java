@@ -1,7 +1,7 @@
 package com.example.user.controller;
 
 import com.example.common.Result;
-import com.example.user.dto.CreditsVO;
+import com.example.user.dto.response.CreditsResponse;
 import com.example.user.service.UserCreditsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,13 +25,13 @@ public class UserCreditsController {
 
     @GetMapping
     @Operation(summary = "查询用户信用点")
-    public Result<CreditsVO> credits(@RequestParam Long userId) {
+    public Result<CreditsResponse> credits(@RequestParam Long userId) {
         return Result.ok(userCreditsService.getCredits(userId));
     }
 
     @PostMapping("/update")
     @Operation(summary = "调整用户信用点（可为负）")
-    public Result<CreditsVO> update(@RequestParam Long userId, @RequestParam Integer delta) {
+    public Result<CreditsResponse> update(@RequestParam Long userId, @RequestParam Integer delta) {
         return Result.ok(userCreditsService.updateCredits(userId, delta));
     }
 }

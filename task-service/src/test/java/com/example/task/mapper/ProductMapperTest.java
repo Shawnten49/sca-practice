@@ -1,6 +1,6 @@
 package com.example.task.mapper;
 
-import com.example.task.model.ProductRow;
+import com.example.dto.ProductDTO;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.jupiter.api.Test;
@@ -29,17 +29,17 @@ class ProductMapperTest {
             ProductMapper mapper = session.getMapper(ProductMapper.class);
 
             // shardTotal=3, shardIndex=1 → MOD(id,3)=1 → 1,4
-            List<ProductRow> page1 = mapper.selectRecentByShard(cutoff, 0L, 1, 3, 1);
-            assertThat(page1).extracting(ProductRow::id).containsExactly(1L);
+            List<ProductDTO> page1 = mapper.selectRecentByShard(cutoff, 0L, 1, 3, 1);
+            assertThat(page1).extracting(ProductDTO::id).containsExactly(1L);
 
-            List<ProductRow> page2 = mapper.selectRecentByShard(cutoff, 1L, 1, 3, 1);
-            assertThat(page2).extracting(ProductRow::id).containsExactly(4L);
+            List<ProductDTO> page2 = mapper.selectRecentByShard(cutoff, 1L, 1, 3, 1);
+            assertThat(page2).extracting(ProductDTO::id).containsExactly(4L);
 
             assertThat(mapper.selectRecentByShard(cutoff, 4L, 1, 3, 1)).isEmpty();
 
             // shardIndex=0 → MOD(id,3)=0 → 3（id=5 超时被过滤）
-            List<ProductRow> zero = mapper.selectRecentByShard(cutoff, 0L, 0, 3, 10);
-            assertThat(zero).extracting(ProductRow::id).containsExactly(3L);
+            List<ProductDTO> zero = mapper.selectRecentByShard(cutoff, 0L, 0, 3, 10);
+            assertThat(zero).extracting(ProductDTO::id).containsExactly(3L);
         }
     }
 }

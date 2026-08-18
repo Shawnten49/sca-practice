@@ -2,7 +2,7 @@ package com.example.task.service;
 
 import com.example.task.config.TaskProperties;
 import com.example.task.mapper.UserMapper;
-import com.example.task.model.UserRow;
+import com.example.dto.UserDTO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -45,7 +45,7 @@ class UserCacheServiceTest {
         verify(cacheWriter, times(2)).writeBatch(eq("task:user:"), anyList(), any(), eq(Duration.ofDays(7)));
     }
 
-    private static UserRow user(long id) {
-        return new UserRow(id, "u" + id, 10, LocalDateTime.of(2026, 8, 18, 10, 0));
+    private static UserDTO user(long id) {
+        return new UserDTO(id, "u" + id, 10, LocalDateTime.of(2026, 8, 18, 10, 0));
     }
 }

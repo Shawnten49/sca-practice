@@ -2,7 +2,7 @@ package com.example.task.service;
 
 import com.example.task.config.TaskProperties;
 import com.example.task.mapper.ProductMapper;
-import com.example.task.model.ProductRow;
+import com.example.dto.ProductDTO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -46,8 +46,8 @@ class ProductCacheServiceTest {
         verify(cacheWriter, times(2)).writeBatch(eq("task:product:"), anyList(), any(), eq(Duration.ofDays(3)));
     }
 
-    private static ProductRow product(long id) {
-        return new ProductRow(id, "p" + id, "brand", new BigDecimal("10.00"), "",
+    private static ProductDTO product(long id) {
+        return new ProductDTO(id, "p" + id, "brand", new BigDecimal("10.00"), "",
                 LocalDateTime.of(2026, 8, 18, 10, 0));
     }
 }

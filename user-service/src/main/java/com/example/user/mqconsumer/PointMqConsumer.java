@@ -1,7 +1,7 @@
 package com.example.user.mqconsumer;
 
 import com.example.dto.PointAddMessage;
-import com.example.user.domain.UserPoints;
+import com.example.user.entity.UserPoints;
 import com.example.user.mapper.UserMapper;
 import com.example.user.mapper.UserPointsMapper;
 import com.example.user.service.UserPointsService;

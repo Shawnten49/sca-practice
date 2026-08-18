@@ -3,13 +3,13 @@
 <mapper namespace="com.example.user.mapper.UserPointsMapper">
 
     <!-- 插入积分流水：id 数据库自增；order_id 唯一索引兜底幂等 -->
-    <insert id="insertUserPoints" parameterType="com.example.user.domain.UserPoints"
+    <insert id="insertUserPoints" parameterType="com.example.user.entity.UserPoints"
             useGeneratedKeys="true" keyProperty="id">
         INSERT IGNORE INTO user_points (user_id, order_id, points)
         VALUES (#{userId}, #{orderId}, #{points})
     </insert>
 
-    <select id="selectByOrderId" resultType="com.example.user.domain.UserPoints">
+    <select id="selectByOrderId" resultType="com.example.user.entity.UserPoints">
         SELECT id, user_id, order_id, points, create_time
         FROM user_points
         WHERE order_id = #{orderId}

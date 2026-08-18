@@ -2,7 +2,7 @@ package com.example.task.service;
 
 import com.example.task.config.TaskProperties;
 import com.example.task.mapper.OrderShardMapper;
-import com.example.task.model.OrderRow;
+import com.example.dto.OrderDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -45,12 +45,12 @@ public class OrderCacheService {
         long lastId = 0L;
         long total = 0L;
         while (true) {
-            List<OrderRow> batch = orderShardMapper.selectRecent(
+            List<OrderDTO> batch = orderShardMapper.selectRecent(
                     table, cutoff, lastId, properties.getBatchSize());
             if (batch.isEmpty()) {
                 break;
             }
-            cacheWriter.writeBatch(KEY_PREFIX, batch, OrderRow::id, properties.getOrderTtl());
+            cacheWriter.writeBatch(KEY_PREFIX, batch, OrderDTO::id, properties.getOrderTtl());
             total += batch.size();
             lastId = batch.get(batch.size() - 1).id();
             log.info("订单分片 {} 刷新一批 {} 条，lastId={}", table, batch.size(), lastId);

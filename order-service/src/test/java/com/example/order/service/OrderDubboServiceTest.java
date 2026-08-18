@@ -1,6 +1,7 @@
 package com.example.order.service;
 
 import com.example.api.StockDubboService;
+import com.example.api.dto.StockDeductResult;
 import com.example.order.mapper.OrderMapper;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.junit.jupiter.api.Test;
@@ -26,7 +27,7 @@ class OrderDubboServiceTest {
     @Test
     void createOrderSuccessThenMessageSent() {
         ReflectionTestUtils.setField(orderDubboService, "stockDubboService", stockDubboService);
-        when(stockDubboService.deduct(1L, 2)).thenReturn("dubbo:扣减成功");
+        when(stockDubboService.deduct(1L, 2)).thenReturn(StockDeductResult.ok());
 
         String result = orderDubboService.createOrder(10L, 1L, 2, false);
         assertThat(result).contains("下单成功");
@@ -38,7 +39,7 @@ class OrderDubboServiceTest {
     @Test
     void createOrderFailThrows() {
         ReflectionTestUtils.setField(orderDubboService, "stockDubboService", stockDubboService);
-        when(stockDubboService.deduct(1L, 2)).thenReturn("dubbo:扣减成功");
+        when(stockDubboService.deduct(1L, 2)).thenReturn(StockDeductResult.ok());
 
         assertThatThrownBy(() -> orderDubboService.createOrder(10L, 1L, 2, true))
                 .isInstanceOf(RuntimeException.class);

@@ -1,7 +1,7 @@
 package com.example.task.mapper;
 
 import com.baomidou.dynamic.datasource.annotation.DS;
-import com.example.task.model.OrderRow;
+import com.example.dto.OrderDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -18,7 +18,7 @@ public interface OrderShardMapper {
      *
      * @param table 物理表名（来自配置白名单，仅用于 ${} 拼接）
      */
-    List<OrderRow> selectRecent(@Param("table") String table,
+    List<OrderDTO> selectRecent(@Param("table") String table,
                                 @Param("cutoff") LocalDateTime cutoff,
                                 @Param("lastId") Long lastId,
                                 @Param("batchSize") int batchSize);

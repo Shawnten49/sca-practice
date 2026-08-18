@@ -1,6 +1,7 @@
 package com.example.stock.service;
 
 import com.example.api.StockDubboService;
+import com.example.api.dto.StockDeductResult;
 import org.apache.dubbo.config.annotation.DubboService;
 
 @DubboService
@@ -13,8 +14,8 @@ public class StockDubboServiceImpl implements StockDubboService {
     }
 
     @Override
-    public String deduct(Long productId, Integer count) {
+    public StockDeductResult deduct(Long productId, Integer count) {
         stockService.deduct(productId, count);
-        return "dubbo:扣减成功";
+        return StockDeductResult.ok();
     }
 }

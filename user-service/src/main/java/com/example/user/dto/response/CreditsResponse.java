@@ -1,5 +1,5 @@
-package com.example.user.dto;
+package com.example.user.dto.response;
 
 /** 信用点返回体。 */
-public record CreditsVO(Long userId, Integer credits) {
+public record CreditsResponse(Long userId, Integer credits) {
 }

@@ -1,8 +1,10 @@
 package com.example.user.sharding.controller;
 
 import com.example.common.Result;
-import com.example.user.sharding.domain.UserBehavior;
-import com.example.user.sharding.dto.UserBehaviorCreateRequest;
+import com.example.user.sharding.converter.UserBehaviorConverter;
+import com.example.user.sharding.dto.request.UserBehaviorCreateRequest;
+import com.example.user.sharding.dto.response.UserBehaviorResponse;
+import com.example.user.sharding.entity.UserBehavior;
 import com.example.user.sharding.service.ShardingUserBehaviorService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,14 +28,17 @@ public class ShardingUserBehaviorController {
     }
 
     @PostMapping("/user-behavior")
-    public Result<UserBehavior> create(@RequestBody UserBehaviorCreateRequest request) {
-        return Result.ok(shardingUserBehaviorService.create(
-                request.userId(), request.action(), request.description()));
+    public Result<UserBehaviorResponse> create(@RequestBody UserBehaviorCreateRequest request) {
+        return Result.ok(UserBehaviorConverter.toResponse(
+                shardingUserBehaviorService.create(
+                        request.userId(), request.action(), request.description())));
     }
 
     @GetMapping("/user-behavior")
-    public Result<List<UserBehavior>> query(@RequestParam Long userId,
-                                            @RequestParam(required = false) Integer limit) {
-        return Result.ok(shardingUserBehaviorService.listByUserId(userId, limit));
+    public Result<List<UserBehaviorResponse>> query(@RequestParam Long userId,
+                                                    @RequestParam(required = false) Integer limit) {
+        return Result.ok(shardingUserBehaviorService.listByUserId(userId, limit).stream()
+                .map(UserBehaviorConverter::toResponse)
+                .toList());
     }
 }

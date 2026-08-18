@@ -1,6 +1,6 @@
 package com.example.task.service;
 
-import com.example.task.model.UserRow;
+import com.example.dto.UserDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.Test;
@@ -49,8 +49,8 @@ class TaskCacheWriterTest {
 
         TaskCacheWriter writer = new TaskCacheWriter(redisTemplate, objectMapper);
         writer.writeBatch("task:user:", List.of(
-                        new UserRow(1L, "alice", 10, LocalDateTime.of(2026, 8, 18, 10, 0))),
-                UserRow::id, Duration.ofDays(7));
+                        new UserDTO(1L, "alice", 10, LocalDateTime.of(2026, 8, 18, 10, 0))),
+                UserDTO::id, Duration.ofDays(7));
 
         ArgumentCaptor<byte[]> keyCaptor = ArgumentCaptor.forClass(byte[].class);
         ArgumentCaptor<byte[]> valueCaptor = ArgumentCaptor.forClass(byte[].class);

@@ -4,9 +4,9 @@ import com.example.exception.BusinessException;
 import com.example.exception.ErrorCode;
 import com.example.user.config.PointsCacheEvictQueue;
 import com.example.user.config.PointsCacheProperties;
-import com.example.user.domain.PointsValue;
-import com.example.user.domain.User;
-import com.example.user.dto.PointsVO;
+import com.example.user.entity.PointsValue;
+import com.example.user.entity.User;
+import com.example.user.dto.response.PointsResponse;
 import com.example.user.mapper.UserMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import org.redisson.api.RLock;
@@ -62,13 +62,13 @@ public class UserPointsService {
     }
 
     /** 查询积分：Caffeine → Redis → MySQL（含空值缓存与击穿单飞）。用户不存在返回 404。 */
-    public PointsVO getPoints(Long userId) {
+    public PointsResponse getPoints(Long userId) {
         validateUserId(userId);
 
         // ① Caffeine 本地缓存
         PointsValue local = pointsCache.getIfPresent(userId);
         if (local != null) {
-            PointsVO vo = toVo(userId, local);
+            PointsResponse vo = toResponse(userId, local);
             log.debug("cache=caffeine userId={} points={}", userId, vo.points());
             return vo;
         }
@@ -76,17 +76,17 @@ public class UserPointsService {
         // ② Redis 分布式缓存
         PointsValue value = tryReadRedis(redisKey(userId), userId);
         if (value != null) {
-            PointsVO vo = toVo(userId, value);
+            PointsResponse vo = toResponse(userId, value);
             log.debug("cache=redis userId={} points={}", userId, vo.points());
             return vo;
         }
 
         // ③ 都未命中：单飞回源（防击穿）
-        return toVo(userId, loadWithMutex(userId, redisKey(userId)));
+        return toResponse(userId, loadWithMutex(userId, redisKey(userId)));
     }
 
     /** 增量更新积分（可为负）：DB 原子更新 → 失效两级缓存 → 写后读回填。 */
-    public PointsVO updatePoints(Long userId, Integer delta) {
+    public PointsResponse updatePoints(Long userId, Integer delta) {
         validateUserId(userId);
         if (delta == null || delta == 0) {
             throw new IllegalArgumentException("delta 不能为 0");
@@ -108,7 +108,7 @@ public class UserPointsService {
         invalidatePoints(userId);
 
         // 写后读最新值并回填两级缓存
-        return toVo(userId, loadFromDb(userId, redisKey(userId)));
+        return toResponse(userId, loadFromDb(userId, redisKey(userId)));
     }
 
     /** 立即删除两级缓存（不含延迟任务），供延迟队列监听器与写前删复用。 */
@@ -225,11 +225,11 @@ public class UserPointsService {
         }
     }
 
-    private PointsVO toVo(Long userId, PointsValue value) {
+    private PointsResponse toResponse(Long userId, PointsValue value) {
         if (value.isEmpty()) {
             throw new BusinessException(ErrorCode.NOT_FOUND, "用户不存在: userId=" + userId);
         }
-        return new PointsVO(userId, value.points());
+        return new PointsResponse(userId, value.points());
     }
 
     private void validateUserId(Long userId) {

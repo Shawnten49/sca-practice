@@ -3,19 +3,19 @@
 <mapper namespace="com.example.stock.mapper.ProductMapper">
 
     <!-- create_time 不写入，由 DB 默认值 CURRENT_TIMESTAMP 填充 -->
-    <insert id="insertProduct" parameterType="com.example.stock.domain.Product">
+    <insert id="insertProduct" parameterType="com.example.stock.entity.Product">
         INSERT INTO product (id, name, brand, price, description)
         VALUES (#{id}, #{name}, #{brand}, #{price}, #{description})
     </insert>
 
-    <select id="selectProductById" resultType="com.example.stock.domain.Product">
+    <select id="selectProductById" resultType="com.example.stock.entity.Product">
         SELECT id, name, brand, price, description, create_time
         FROM product
         WHERE id = #{id}
     </select>
 
     <!-- 仅 ES 降级兜底使用；主查询路径走 ES match -->
-    <select id="selectByNameLike" resultType="com.example.stock.domain.Product">
+    <select id="selectByNameLike" resultType="com.example.stock.entity.Product">
         SELECT id, name, brand, price, description, create_time
         FROM product
         WHERE name LIKE CONCAT('%', #{name}, '%')

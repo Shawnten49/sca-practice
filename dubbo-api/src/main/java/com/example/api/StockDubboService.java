@@ -1,6 +1,7 @@
 package com.example.api;
 
+import com.example.api.dto.StockDeductResult;
 
 public interface StockDubboService {
-    String deduct(Long productId, Integer count);
+    StockDeductResult deduct(Long productId, Integer count);
 }

@@ -1,4 +1,4 @@
-package com.example.user.domain;
+package com.example.user.entity;
 
 /**
  * 积分缓存值：points 为 null 表示"用户不存在"空值标记

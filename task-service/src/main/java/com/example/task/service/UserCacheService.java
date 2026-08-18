@@ -2,7 +2,7 @@ package com.example.task.service;
 
 import com.example.task.config.TaskProperties;
 import com.example.task.mapper.UserMapper;
-import com.example.task.model.UserRow;
+import com.example.dto.UserDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -31,12 +31,12 @@ public class UserCacheService {
         long lastId = 0L;
         long total = 0L;
         while (true) {
-            List<UserRow> batch = userMapper.selectByShard(
+            List<UserDTO> batch = userMapper.selectByShard(
                     lastId, shardIndex, shardTotal, properties.getBatchSize());
             if (batch.isEmpty()) {
                 break;
             }
-            cacheWriter.writeBatch(KEY_PREFIX, batch, UserRow::id, properties.getUserTtl());
+            cacheWriter.writeBatch(KEY_PREFIX, batch, UserDTO::id, properties.getUserTtl());
             total += batch.size();
             lastId = batch.get(batch.size() - 1).id();
             if (batch.size() < properties.getBatchSize()) {

@@ -1,7 +1,7 @@
 package com.example.task.mapper;
 
 import com.baomidou.dynamic.datasource.annotation.DS;
-import com.example.task.model.UserRow;
+import com.example.dto.UserDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -12,7 +12,7 @@ import java.util.List;
 @Mapper
 public interface UserMapper {
 
-    List<UserRow> selectByShard(@Param("lastId") Long lastId,
+    List<UserDTO> selectByShard(@Param("lastId") Long lastId,
                                 @Param("shardIndex") int shardIndex,
                                 @Param("shardTotal") int shardTotal,
                                 @Param("batchSize") int batchSize);

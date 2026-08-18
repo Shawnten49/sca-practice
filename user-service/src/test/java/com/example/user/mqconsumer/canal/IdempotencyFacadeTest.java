@@ -1,6 +1,6 @@
 package com.example.user.mqconsumer.canal;
 
-import com.example.user.domain.SyncLog;
+import com.example.user.entity.SyncLog;
 import com.example.user.mapper.SyncLogMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

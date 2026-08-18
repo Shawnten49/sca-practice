@@ -1,7 +1,7 @@
 package com.example.user.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.example.user.domain.SyncLog;
+import com.example.user.entity.SyncLog;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

@@ -3,7 +3,7 @@ package com.example.order.mapper;
 import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.config.GlobalConfig;
 import com.baomidou.mybatisplus.spring.MybatisSqlSessionFactoryBean;
-import com.example.order.domain.Order;
+import com.example.order.entity.Order;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.shardingsphere.driver.api.yaml.YamlShardingSphereDataSourceFactory;

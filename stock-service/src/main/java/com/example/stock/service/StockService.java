@@ -3,7 +3,7 @@ package com.example.stock.service;
 import com.example.exception.BusinessException;
 import com.example.exception.ErrorCode;
 import com.example.exception.InsufficientStockException;
-import com.example.stock.domain.Stock;
+import com.example.stock.entity.Stock;
 import com.example.stock.mapper.StockMapper;
 import org.springframework.stereotype.Service;
 

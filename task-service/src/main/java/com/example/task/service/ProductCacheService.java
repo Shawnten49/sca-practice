@@ -2,7 +2,7 @@ package com.example.task.service;
 
 import com.example.task.config.TaskProperties;
 import com.example.task.mapper.ProductMapper;
-import com.example.task.model.ProductRow;
+import com.example.dto.ProductDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -33,12 +33,12 @@ public class ProductCacheService {
         long lastId = 0L;
         long total = 0L;
         while (true) {
-            List<ProductRow> batch = productMapper.selectRecentByShard(
+            List<ProductDTO> batch = productMapper.selectRecentByShard(
                     cutoff, lastId, shardIndex, shardTotal, properties.getBatchSize());
             if (batch.isEmpty()) {
                 break;
             }
-            cacheWriter.writeBatch(KEY_PREFIX, batch, ProductRow::id, properties.getProductTtl());
+            cacheWriter.writeBatch(KEY_PREFIX, batch, ProductDTO::id, properties.getProductTtl());
             total += batch.size();
             lastId = batch.get(batch.size() - 1).id();
             if (batch.size() < properties.getBatchSize()) {

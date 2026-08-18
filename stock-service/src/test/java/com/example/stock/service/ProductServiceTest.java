@@ -1,7 +1,7 @@
 package com.example.stock.service;
 
-import com.example.stock.domain.Product;
-import com.example.stock.dto.ProductSaveRequest;
+import com.example.stock.entity.Product;
+import com.example.stock.dto.request.ProductCreateRequest;
 import com.example.stock.es.ProductDocument;
 import com.example.stock.mapper.ProductMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,7 +43,7 @@ class ProductServiceTest {
 
     @Test
     void saveInsertsWithSnowflakeIdAndReturnsRequeriedProduct() {
-        ProductSaveRequest request = new ProductSaveRequest(" 华为 Mate 70 Pro ", "华为",
+        ProductCreateRequest request = new ProductCreateRequest(" 华为 Mate 70 Pro ", "华为",
                 new BigDecimal("6999.00"), " 麒麟芯片旗舰手机 ");
         when(productMapper.selectProductById(any(Long.class)))
                 .thenAnswer(invocation -> Optional.of(Product.builder()
@@ -63,7 +63,7 @@ class ProductServiceTest {
 
     @Test
     void saveRejectsBlankName() {
-        ProductSaveRequest request = new ProductSaveRequest(" ", "华为", new BigDecimal("6999.00"), null);
+        ProductCreateRequest request = new ProductCreateRequest(" ", "华为", new BigDecimal("6999.00"), null);
 
         assertThatThrownBy(() -> productService.save(request))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -72,7 +72,7 @@ class ProductServiceTest {
 
     @Test
     void saveRejectsNegativePrice() {
-        ProductSaveRequest request = new ProductSaveRequest("华为 Mate 70 Pro", "华为",
+        ProductCreateRequest request = new ProductCreateRequest("华为 Mate 70 Pro", "华为",
                 new BigDecimal("-1"), null);
 
         assertThatThrownBy(() -> productService.save(request))

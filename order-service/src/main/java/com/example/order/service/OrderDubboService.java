@@ -1,7 +1,8 @@
 package com.example.order.service;
 
 import com.example.api.StockDubboService;
-import com.example.order.domain.Order;
+import com.example.api.dto.StockDeductResult;
+import com.example.order.entity.Order;
 import com.example.order.mapper.OrderMapper;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
@@ -48,7 +49,7 @@ public class OrderDubboService {
                 .build());
 
         // 跨服务扣库存：这次走 Dubbo，XID 由 seata-dubbo 自动传递
-        String stockResult = stockDubboService.deduct(productId, count);
+        StockDeductResult stockResult = stockDubboService.deduct(productId, count);
 
         if (fail) {
             throw new RuntimeException("模拟下单失败，触发全局回滚");
@@ -57,7 +58,7 @@ public class OrderDubboService {
         //仅仅做mq消息测试，不需要事务消息
         sendPaySuccessMessage(userId, productId, count);
 
-        return "下单成功：" + stockResult;
+        return "下单成功：" + stockResult.message();
     }
 
     /** after-commit：全局事务提交后再发消息，避免消息与事务状态不一致。 */

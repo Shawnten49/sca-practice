@@ -1,7 +1,7 @@
 package com.example.user.controller;
 
 import com.example.common.Result;
-import com.example.user.dto.PointsVO;
+import com.example.user.dto.response.PointsResponse;
 import com.example.user.service.UserPointsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,13 +25,13 @@ public class UserPointsController {
 
     @GetMapping
     @Operation(summary = "查询用户积分")
-    public Result<PointsVO> points(@RequestParam Long userId) {
+    public Result<PointsResponse> points(@RequestParam Long userId) {
         return Result.ok(userPointsService.getPoints(userId));
     }
 
     @PostMapping("/update")
     @Operation(summary = "调整用户积分（可为负）")
-    public Result<PointsVO> update(@RequestParam Long userId, @RequestParam Integer delta) {
+    public Result<PointsResponse> update(@RequestParam Long userId, @RequestParam Integer delta) {
         return Result.ok(userPointsService.updatePoints(userId, delta));
     }
 }

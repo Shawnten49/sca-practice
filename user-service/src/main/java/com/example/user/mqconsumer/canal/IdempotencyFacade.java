@@ -1,6 +1,6 @@
 package com.example.user.mqconsumer.canal;
 
-import com.example.user.domain.SyncLog;
+import com.example.user.entity.SyncLog;
 import com.example.user.mapper.SyncLogMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

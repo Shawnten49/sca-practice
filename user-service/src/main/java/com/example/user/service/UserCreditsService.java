@@ -3,7 +3,7 @@ package com.example.user.service;
 import com.example.exception.BusinessException;
 import com.example.exception.ErrorCode;
 import com.example.user.config.CreditsProperties;
-import com.example.user.dto.CreditsVO;
+import com.example.user.dto.response.CreditsResponse;
 import com.example.user.mapper.UserMapper;
 import org.springframework.stereotype.Service;
 
@@ -24,17 +24,17 @@ public class UserCreditsService {
     }
 
     /** 查询信用点；用户不存在返回 404。 */
-    public CreditsVO getCredits(Long userId) {
+    public CreditsResponse getCredits(Long userId) {
         validateUserId(userId);
         Integer credits = creditsCache.getWithMutex(userId);
         if (credits == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND, "用户不存在: userId=" + userId);
         }
-        return new CreditsVO(userId, credits);
+        return new CreditsResponse(userId, credits);
     }
 
     /** 增量修改信用点（delta 可为负）；扣减后为负返回 409。 */
-    public CreditsVO updateCredits(Long userId, Integer delta) {
+    public CreditsResponse updateCredits(Long userId, Integer delta) {
         validateUserId(userId);
         if (delta == null || delta == 0) {
             throw new IllegalArgumentException("delta 不能为 0");

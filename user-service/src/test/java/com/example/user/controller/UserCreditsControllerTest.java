@@ -1,7 +1,7 @@
 package com.example.user.controller;
 
 import com.example.common.GlobalExceptionHandler;
-import com.example.user.dto.CreditsVO;
+import com.example.user.dto.response.CreditsResponse;
 import com.example.user.service.UserCreditsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,7 +32,7 @@ class UserCreditsControllerTest {
 
     @Test
     void getCreditsReturnsResultWrapper() throws Exception {
-        when(userCreditsService.getCredits(1L)).thenReturn(new CreditsVO(1L, 0));
+        when(userCreditsService.getCredits(1L)).thenReturn(new CreditsResponse(1L, 0));
 
         mockMvc.perform(get("/user/credits").param("userId", "1"))
                 .andExpect(status().isOk())
@@ -53,7 +53,7 @@ class UserCreditsControllerTest {
 
     @Test
     void updateCreditsReturnsLatestCredits() throws Exception {
-        when(userCreditsService.updateCredits(1L, 100)).thenReturn(new CreditsVO(1L, 100));
+        when(userCreditsService.updateCredits(1L, 100)).thenReturn(new CreditsResponse(1L, 100));
 
         mockMvc.perform(post("/user/credits/update").param("userId", "1").param("delta", "100"))
                 .andExpect(status().isOk())

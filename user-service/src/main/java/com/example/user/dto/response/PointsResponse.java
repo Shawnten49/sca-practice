@@ -1,5 +1,5 @@
-package com.example.user.dto;
+package com.example.user.dto.response;
 
 /** 积分返回体。 */
-public record PointsVO(Long userId, Integer points) {
+public record PointsResponse(Long userId, Integer points) {
 }

@@ -1,6 +1,6 @@
 package com.example.order.dao;
 
-import com.example.order.domain.Order;
+import com.example.order.entity.Order;
 
 /**
  * 本地事务（LOCAL 数据源）专用订单写入 mapper。

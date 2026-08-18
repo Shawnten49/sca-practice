@@ -3,8 +3,8 @@ package com.example.stock.service;
 import com.example.exception.BusinessException;
 import com.example.exception.ErrorCode;
 import com.example.id.SnowflakeIdGenerator;
-import com.example.stock.domain.Product;
-import com.example.stock.dto.ProductSaveRequest;
+import com.example.stock.entity.Product;
+import com.example.stock.dto.request.ProductCreateRequest;
 import com.example.stock.es.ProductDocument;
 import com.example.stock.mapper.ProductMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +41,7 @@ public class ProductService {
     }
 
     /** 保存商品：雪花 id + 显式列插入，create_time 由 DB 填充，插入后回查返回完整商品。 */
-    public Product save(ProductSaveRequest request) {
+    public Product save(ProductCreateRequest request) {
         validate(request);
         Product product = Product.builder()
                 .id(idGenerator.nextId())
@@ -75,7 +75,7 @@ public class ProductService {
         }
     }
 
-    private void validate(ProductSaveRequest request) {
+    private void validate(ProductCreateRequest request) {
         if (request.name() == null || request.name().isBlank()) {
             throw new IllegalArgumentException("name 不能为空");
         }

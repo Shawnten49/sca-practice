@@ -1,4 +1,4 @@
-package com.example.stock.dto;
+package com.example.stock.dto.request;
 
 import java.math.BigDecimal;
 
@@ -10,5 +10,5 @@ import java.math.BigDecimal;
  * @param price       价格（必填，>= 0）
  * @param description 描述（可空，规范化为空字符串）
  */
-public record ProductSaveRequest(String name, String brand, BigDecimal price, String description) {
+public record ProductCreateRequest(String name, String brand, BigDecimal price, String description) {
 }

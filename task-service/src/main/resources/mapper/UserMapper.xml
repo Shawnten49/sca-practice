@@ -3,7 +3,7 @@
 <mapper namespace="com.example.task.mapper.UserMapper">
 
     <!-- 列白名单：只读业务展示字段，身份证等敏感列不进入 Redis -->
-    <select id="selectByShard" resultType="com.example.task.model.UserRow">
+    <select id="selectByShard" resultType="com.example.dto.UserDTO">
         SELECT id, nickname, points, create_time
         FROM users
         WHERE id &gt; #{lastId} AND MOD(id, #{shardTotal}) = #{shardIndex}
