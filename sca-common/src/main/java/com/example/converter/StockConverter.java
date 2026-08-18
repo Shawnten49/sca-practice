@@ -1,11 +1,11 @@
-package com.example.stock.converter;
+package com.example.converter;
 
-import com.example.stock.dto.response.StockResponse;
-import com.example.stock.entity.Stock;
+import com.example.dto.response.StockResponse;
+import com.example.entity.Stock;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
-/** Stock 实体 → StockResponse（MapStruct）。 */
+/** 库存实体 → StockResponse（接口出参），跨服务复用。 */
 @Mapper(componentModel = "spring")
 public interface StockConverter {
 

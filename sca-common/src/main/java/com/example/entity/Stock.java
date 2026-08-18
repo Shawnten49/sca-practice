@@ -1,4 +1,4 @@
-package com.example.stock.entity;
+package com.example.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -9,7 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 库存实体（MyBatis-Plus）。
+ * 库存实体（MyBatis-Plus，跨服务共享）。
  * id 数据库自增；product_id 为业务唯一键，扣减/查询都按它路由。
  */
 @Data

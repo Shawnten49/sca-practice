@@ -3,7 +3,7 @@ package com.example.task.service;
 import com.example.task.config.TaskProperties;
 import com.example.task.mapper.ProductMapper;
 import com.example.entity.Product;
-import com.example.task.converter.ProductConverter;
+import com.example.converter.ProductConverter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;

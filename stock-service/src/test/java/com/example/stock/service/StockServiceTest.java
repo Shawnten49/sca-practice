@@ -2,9 +2,9 @@ package com.example.stock.service;
 
 import com.example.exception.BusinessException;
 import com.example.exception.InsufficientStockException;
-import com.example.stock.converter.StockConverter;
-import com.example.stock.dto.response.StockResponse;
-import com.example.stock.entity.Stock;
+import com.example.converter.StockConverter;
+import com.example.dto.response.StockResponse;
+import com.example.entity.Stock;
 import com.example.stock.mapper.StockMapper;
 import org.junit.jupiter.api.Test;
 

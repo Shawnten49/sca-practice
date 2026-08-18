@@ -1,10 +1,10 @@
-package com.example.user.sharding.entity;
+package com.example.entity;
 
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
-/** 用户行为实体（Sharding 机制，逻辑表 user_behavior → user_behavior_0~3）。 */
+/** 用户行为实体（Sharding 机制，逻辑表 user_behavior → user_behavior_0~3，跨服务共享）。 */
 @Data
 public class UserBehavior {
 

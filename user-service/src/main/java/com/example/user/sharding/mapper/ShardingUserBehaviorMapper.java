@@ -1,6 +1,6 @@
 package com.example.user.sharding.mapper;
 
-import com.example.user.sharding.entity.UserBehavior;
+import com.example.entity.UserBehavior;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;

@@ -1,9 +1,9 @@
 package com.example.user.sharding.service;
 
 import com.example.id.SnowflakeIdGenerator;
-import com.example.user.sharding.converter.UserBehaviorConverter;
-import com.example.user.sharding.dto.response.UserBehaviorResponse;
-import com.example.user.sharding.entity.UserBehavior;
+import com.example.converter.UserBehaviorConverter;
+import com.example.dto.response.UserBehaviorResponse;
+import com.example.entity.UserBehavior;
 import com.example.user.sharding.mapper.ShardingUserBehaviorMapper;
 import org.springframework.stereotype.Service;
 

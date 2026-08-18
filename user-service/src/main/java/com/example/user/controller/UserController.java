@@ -2,7 +2,7 @@ package com.example.user.controller;
 
 import com.example.common.Result;
 import com.example.user.dto.request.UserCreateRequest;
-import com.example.user.dto.response.UserResponse;
+import com.example.dto.response.UserResponse;
 import com.example.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

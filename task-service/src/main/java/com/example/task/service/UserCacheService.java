@@ -3,7 +3,7 @@ package com.example.task.service;
 import com.example.task.config.TaskProperties;
 import com.example.task.mapper.UserMapper;
 import com.example.dto.UserDTO;
-import com.example.task.converter.UserConverter;
+import com.example.converter.UserConverter;
 import com.example.entity.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

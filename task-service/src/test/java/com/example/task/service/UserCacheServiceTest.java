@@ -3,7 +3,7 @@ package com.example.task.service;
 import com.example.task.config.TaskProperties;
 import com.example.task.mapper.UserMapper;
 import com.example.entity.User;
-import com.example.task.converter.UserConverter;
+import com.example.converter.UserConverter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;

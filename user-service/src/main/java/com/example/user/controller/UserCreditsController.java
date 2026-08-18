@@ -1,7 +1,7 @@
 package com.example.user.controller;
 
 import com.example.common.Result;
-import com.example.user.dto.response.CreditsResponse;
+import com.example.dto.response.CreditsResponse;
 import com.example.user.service.UserCreditsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

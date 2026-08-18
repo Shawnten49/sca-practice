@@ -2,7 +2,7 @@ package com.example.stock.controller;
 
 import com.example.common.Result;
 import com.example.stock.dto.request.ProductCreateRequest;
-import com.example.stock.dto.response.ProductResponse;
+import com.example.dto.response.ProductResponse;
 import com.example.stock.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

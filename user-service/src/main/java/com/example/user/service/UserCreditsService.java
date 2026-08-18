@@ -3,7 +3,7 @@ package com.example.user.service;
 import com.example.exception.BusinessException;
 import com.example.exception.ErrorCode;
 import com.example.user.config.CreditsProperties;
-import com.example.user.dto.response.CreditsResponse;
+import com.example.dto.response.CreditsResponse;
 import com.example.user.mapper.UserMapper;
 import org.springframework.stereotype.Service;
 

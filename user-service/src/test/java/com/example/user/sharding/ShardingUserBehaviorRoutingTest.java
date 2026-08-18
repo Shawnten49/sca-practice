@@ -3,7 +3,7 @@ package com.example.user.sharding;
 import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.config.GlobalConfig;
 import com.baomidou.mybatisplus.spring.MybatisSqlSessionFactoryBean;
-import com.example.user.sharding.entity.UserBehavior;
+import com.example.entity.UserBehavior;
 import com.example.user.sharding.mapper.ShardingUserBehaviorMapper;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;

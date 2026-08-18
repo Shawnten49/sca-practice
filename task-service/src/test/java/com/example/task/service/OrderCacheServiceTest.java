@@ -3,7 +3,7 @@ package com.example.task.service;
 import com.example.task.config.TaskProperties;
 import com.example.task.mapper.OrderShardMapper;
 import com.example.entity.Order;
-import com.example.task.converter.OrderConverter;
+import com.example.converter.OrderConverter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;

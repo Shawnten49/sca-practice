@@ -6,7 +6,7 @@ import com.example.user.config.PointsCacheEvictQueue;
 import com.example.user.config.PointsCacheProperties;
 import com.example.user.entity.PointsValue;
 import com.example.entity.User;
-import com.example.user.dto.response.PointsResponse;
+import com.example.dto.response.PointsResponse;
 import com.example.user.mapper.UserMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import org.redisson.api.RLock;

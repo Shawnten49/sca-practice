@@ -1,7 +1,7 @@
 package com.example.user.controller;
 
 import com.example.common.GlobalExceptionHandler;
-import com.example.user.dto.response.CreditsResponse;
+import com.example.dto.response.CreditsResponse;
 import com.example.user.service.UserCreditsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -1,7 +1,7 @@
 package com.example.stock.service;
 
-import com.example.stock.converter.ProductConverter;
-import com.example.stock.dto.response.ProductResponse;
+import com.example.converter.ProductConverter;
+import com.example.dto.response.ProductResponse;
 import com.example.entity.Product;
 import com.example.stock.dto.request.ProductCreateRequest;
 import com.example.stock.es.ProductDocument;

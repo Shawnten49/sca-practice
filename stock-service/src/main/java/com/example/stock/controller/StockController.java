@@ -1,7 +1,7 @@
 package com.example.stock.controller;
 
 import com.example.common.Result;
-import com.example.stock.dto.response.StockResponse;
+import com.example.dto.response.StockResponse;
 import com.example.stock.service.StockService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;

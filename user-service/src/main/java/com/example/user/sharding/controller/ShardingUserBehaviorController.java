@@ -2,7 +2,7 @@ package com.example.user.sharding.controller;
 
 import com.example.common.Result;
 import com.example.user.sharding.dto.request.UserBehaviorCreateRequest;
-import com.example.user.sharding.dto.response.UserBehaviorResponse;
+import com.example.dto.response.UserBehaviorResponse;
 import com.example.user.sharding.service.ShardingUserBehaviorService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
