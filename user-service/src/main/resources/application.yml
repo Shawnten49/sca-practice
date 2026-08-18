@@ -100,3 +100,16 @@ jetcache:
       valueDecoder: java
       uri: redis://127.0.0.1:6379/
       expireAfterWriteInMillis: 300000
+
+# ---- 接口文档（SpringDoc + Knife4j） ----
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+
+knife4j:
+  setting:
+    language: zh_cn

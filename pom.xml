@@ -43,6 +43,7 @@
         <redisson.version>3.50.0</redisson.version>
         <jetcache.version>2.7.7</jetcache.version>
     <mapstruct.version>1.6.3</mapstruct.version>
+    <knife4j.version>4.5.0</knife4j.version>
     </properties>
 
     <modules>
@@ -234,6 +235,11 @@
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct-processor</artifactId>
             <version>${mapstruct.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.xiaoymin</groupId>
+            <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+            <version>${knife4j.version}</version>
         </dependency>
         </dependencies>
     </dependencyManagement>
