@@ -13,6 +13,8 @@ spring:
     user: root
     password: ""
   data:
+    mongodb:
+      uri: mongodb://127.0.0.1:27017/user_profile
     redis:
       host: 127.0.0.1
       port: 6379
