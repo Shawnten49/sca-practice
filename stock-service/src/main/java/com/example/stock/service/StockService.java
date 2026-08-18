@@ -3,6 +3,8 @@ package com.example.stock.service;
 import com.example.exception.BusinessException;
 import com.example.exception.ErrorCode;
 import com.example.exception.InsufficientStockException;
+import com.example.stock.converter.StockConverter;
+import com.example.stock.dto.response.StockResponse;
 import com.example.stock.entity.Stock;
 import com.example.stock.mapper.StockMapper;
 import org.springframework.stereotype.Service;
@@ -11,9 +13,11 @@ import org.springframework.stereotype.Service;
 public class StockService {
 
     private final StockMapper stockMapper;
+    private final StockConverter stockConverter;
 
-    public StockService(StockMapper stockMapper) {
+    public StockService(StockMapper stockMapper, StockConverter stockConverter) {
         this.stockMapper = stockMapper;
+        this.stockConverter = stockConverter;
     }
 
     /**
@@ -30,9 +34,10 @@ public class StockService {
         }
     }
 
-    public Stock query(Long productId) {
-        return stockMapper.selectStockByProductId(productId)
+    public StockResponse query(Long productId) {
+        Stock stock = stockMapper.selectStockByProductId(productId)
                 .orElseThrow(() -> new BusinessException(
                         ErrorCode.NOT_FOUND, "商品不存在: productId=" + productId));
+        return stockConverter.toResponse(stock);
     }
 }

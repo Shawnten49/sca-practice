@@ -2,6 +2,8 @@ package com.example.stock.service;
 
 import com.example.exception.BusinessException;
 import com.example.exception.InsufficientStockException;
+import com.example.stock.converter.StockConverter;
+import com.example.stock.dto.response.StockResponse;
 import com.example.stock.entity.Stock;
 import com.example.stock.mapper.StockMapper;
 import org.junit.jupiter.api.Test;
@@ -17,7 +19,7 @@ import static org.mockito.Mockito.when;
 class StockServiceTest {
 
     private final StockMapper stockMapper = mock(StockMapper.class);
-    private final StockService stockService = new StockService(stockMapper);
+    private final StockService stockService = new StockService(stockMapper, StockConverter.INSTANCE);
 
     @Test
     void deductSuccess() {
@@ -57,8 +59,8 @@ class StockServiceTest {
         when(stockMapper.selectStockByProductId(1L))
                 .thenReturn(Optional.of(Stock.builder().id(1L).productId(1L).quantity(100).build()));
 
-        Stock stock = stockService.query(1L);
-        assertThat(stock.getProductId()).isEqualTo(1L);
-        assertThat(stock.getQuantity()).isEqualTo(100);
+        StockResponse stock = stockService.query(1L);
+        assertThat(stock.productId()).isEqualTo(1L);
+        assertThat(stock.quantity()).isEqualTo(100);
     }
 }

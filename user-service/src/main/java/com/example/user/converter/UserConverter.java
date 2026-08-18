@@ -2,15 +2,14 @@ package com.example.user.converter;
 
 import com.example.user.dto.response.UserResponse;
 import com.example.user.entity.User;
+import org.mapstruct.Mapper;
+import org.mapstruct.factory.Mappers;
 
-/** User 实体 → UserResponse 转换。 */
-public final class UserConverter {
+/** User 实体 → UserResponse（MapStruct）。 */
+@Mapper(componentModel = "spring")
+public interface UserConverter {
 
-    private UserConverter() {
-    }
+    UserConverter INSTANCE = Mappers.getMapper(UserConverter.class);
 
-    public static UserResponse toResponse(User user) {
-        return new UserResponse(user.getId(), user.getNickname(), user.getPoints(),
-                user.getCredits(), user.getIdCard(), user.getCreateTime());
-    }
+    UserResponse toResponse(User user);
 }

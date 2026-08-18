@@ -2,14 +2,14 @@ package com.example.stock.converter;
 
 import com.example.stock.dto.response.StockResponse;
 import com.example.stock.entity.Stock;
+import org.mapstruct.Mapper;
+import org.mapstruct.factory.Mappers;
 
-/** Stock 实体 → StockResponse 转换。 */
-public final class StockConverter {
+/** Stock 实体 → StockResponse（MapStruct）。 */
+@Mapper(componentModel = "spring")
+public interface StockConverter {
 
-    private StockConverter() {
-    }
+    StockConverter INSTANCE = Mappers.getMapper(StockConverter.class);
 
-    public static StockResponse toResponse(Stock stock) {
-        return new StockResponse(stock.getId(), stock.getProductId(), stock.getQuantity());
-    }
+    StockResponse toResponse(Stock stock);
 }

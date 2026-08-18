@@ -1,10 +1,8 @@
 package com.example.user.controller;
 
 import com.example.common.Result;
-import com.example.user.converter.UserConverter;
 import com.example.user.dto.request.UserCreateRequest;
 import com.example.user.dto.response.UserResponse;
-import com.example.user.entity.User;
 import com.example.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,16 +36,15 @@ public class UserController {
     @GetMapping("/user")
     @Operation(summary = "查询用户全部信息（idCard 为脱敏碎片）")
     public Result<UserResponse> user(@RequestParam String id) {
-        User user = userService.getUserInfo(id);
+        UserResponse user = userService.getUserInfo(id);
         return user == null ? Result.fail(500, "服务降级，请稍后再试")
-                : Result.ok(UserConverter.toResponse(user));
+                : Result.ok(user);
     }
 
     /** 保存用户：idCard 加密存储（ShardingSphere !ENCRYPT），返回脱敏碎片 */
     @PostMapping("/user/save")
     @Operation(summary = "保存用户（身份证加密存储）")
     public Result<UserResponse> save(@RequestBody UserCreateRequest request) {
-        return Result.ok(UserConverter.toResponse(
-                userService.saveUser(request.nickname(), request.idCard())));
+        return Result.ok(userService.saveUser(request.nickname(), request.idCard()));
     }
 }

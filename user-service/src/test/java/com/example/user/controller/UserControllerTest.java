@@ -1,7 +1,7 @@
 package com.example.user.controller;
 
 import com.example.common.GlobalExceptionHandler;
-import com.example.user.entity.User;
+import com.example.user.dto.response.UserResponse;
 import com.example.user.dto.request.UserCreateRequest;
 import com.example.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,10 +33,8 @@ class UserControllerTest {
 
     @Test
     void userReturnsFullUserWithMaskedIdCard() throws Exception {
-        when(userService.getUserInfo("1")).thenReturn(User.builder()
-                .id(1L).nickname("demo").points(100).credits(0)
-                .idCard("110***********1234")
-                .build());
+        when(userService.getUserInfo("1")).thenReturn(
+                new UserResponse(1L, "demo", 100, 0, "110***********1234", null));
 
         mockMvc.perform(get("/user").param("id", "1"))
                 .andExpect(status().isOk())
@@ -68,10 +66,8 @@ class UserControllerTest {
 
     @Test
     void saveReturnsSavedUserWithMaskedIdCard() throws Exception {
-        when(userService.saveUser("zhangsan", "110101199003071234")).thenReturn(User.builder()
-                .id(100L).nickname("zhangsan").points(0).credits(0)
-                .idCard("110***********1234")
-                .build());
+        when(userService.saveUser("zhangsan", "110101199003071234")).thenReturn(
+                new UserResponse(100L, "zhangsan", 0, 0, "110***********1234", null));
 
         mockMvc.perform(post("/user/save")
                         .contentType("application/json")

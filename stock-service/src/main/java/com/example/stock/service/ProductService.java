@@ -3,8 +3,10 @@ package com.example.stock.service;
 import com.example.exception.BusinessException;
 import com.example.exception.ErrorCode;
 import com.example.id.SnowflakeIdGenerator;
-import com.example.stock.entity.Product;
+import com.example.stock.converter.ProductConverter;
 import com.example.stock.dto.request.ProductCreateRequest;
+import com.example.stock.dto.response.ProductResponse;
+import com.example.stock.entity.Product;
 import com.example.stock.es.ProductDocument;
 import com.example.stock.mapper.ProductMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -31,17 +33,20 @@ public class ProductService {
 
     private final ProductMapper productMapper;
     private final ElasticsearchOperations operations;
+    private final ProductConverter productConverter;
 
     /** 本机单实例固定 machineId；多实例部署时改为配置注入，避免雪花冲突 */
     private final SnowflakeIdGenerator idGenerator = new SnowflakeIdGenerator(4L);
 
-    public ProductService(ProductMapper productMapper, ElasticsearchOperations operations) {
+    public ProductService(ProductMapper productMapper, ElasticsearchOperations operations,
+                          ProductConverter productConverter) {
         this.productMapper = productMapper;
         this.operations = operations;
+        this.productConverter = productConverter;
     }
 
     /** 保存商品：雪花 id + 显式列插入，create_time 由 DB 填充，插入后回查返回完整商品。 */
-    public Product save(ProductCreateRequest request) {
+    public ProductResponse save(ProductCreateRequest request) {
         validate(request);
         Product product = Product.builder()
                 .id(idGenerator.nextId())
@@ -51,12 +56,13 @@ public class ProductService {
                 .description(request.description() == null ? "" : request.description().trim())
                 .build();
         productMapper.insertProduct(product);
-        return productMapper.selectProductById(product.getId())
+        Product saved = productMapper.selectProductById(product.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "product not found after save: " + product.getId()));
+        return productConverter.toResponse(saved);
     }
 
     /** 按名称查询：ES match 主路径，异常降级 MySQL LIKE。 */
-    public List<Product> searchByName(String name) {
+    public List<ProductResponse> searchByName(String name) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("name 不能为空");
         }
@@ -68,10 +74,13 @@ public class ProductService {
             return operations.search(query, ProductDocument.class).stream()
                     .map(SearchHit::getContent)
                     .map(this::toProduct)
+                    .map(productConverter::toResponse)
                     .toList();
         } catch (Exception e) {
             log.warn("ES 查询失败，降级 MySQL LIKE: name={}", keyword, e);
-            return productMapper.selectByNameLike(keyword);
+            return productMapper.selectByNameLike(keyword).stream()
+                    .map(productConverter::toResponse)
+                    .toList();
         }
     }
 

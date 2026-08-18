@@ -1,10 +1,8 @@
 package com.example.stock.controller;
 
 import com.example.common.Result;
-import com.example.stock.converter.ProductConverter;
 import com.example.stock.dto.request.ProductCreateRequest;
 import com.example.stock.dto.response.ProductResponse;
-import com.example.stock.entity.Product;
 import com.example.stock.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,14 +28,12 @@ public class ProductController {
     @PostMapping("/product/save")
     @Operation(summary = "保存商品（MySQL 落库，Canal 异步同步 ES）")
     public Result<ProductResponse> save(@RequestBody ProductCreateRequest request) {
-        return Result.ok(ProductConverter.toResponse(productService.save(request)));
+        return Result.ok(productService.save(request));
     }
 
     @GetMapping("/product")
     @Operation(summary = "按商品名称查询（ES 全文检索）")
     public Result<List<ProductResponse>> query(@RequestParam String name) {
-        return Result.ok(productService.searchByName(name).stream()
-                .map(ProductConverter::toResponse)
-                .toList());
+        return Result.ok(productService.searchByName(name));
     }
 }

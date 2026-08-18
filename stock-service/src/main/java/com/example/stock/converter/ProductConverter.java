@@ -2,15 +2,14 @@ package com.example.stock.converter;
 
 import com.example.stock.dto.response.ProductResponse;
 import com.example.stock.entity.Product;
+import org.mapstruct.Mapper;
+import org.mapstruct.factory.Mappers;
 
-/** Product 实体 → ProductResponse 转换。 */
-public final class ProductConverter {
+/** Product 实体 → ProductResponse（MapStruct）。 */
+@Mapper(componentModel = "spring")
+public interface ProductConverter {
 
-    private ProductConverter() {
-    }
+    ProductConverter INSTANCE = Mappers.getMapper(ProductConverter.class);
 
-    public static ProductResponse toResponse(Product product) {
-        return new ProductResponse(product.getId(), product.getName(), product.getBrand(),
-                product.getPrice(), product.getDescription(), product.getCreateTime());
-    }
+    ProductResponse toResponse(Product product);
 }

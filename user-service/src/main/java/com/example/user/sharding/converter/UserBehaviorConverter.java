@@ -2,15 +2,14 @@ package com.example.user.sharding.converter;
 
 import com.example.user.sharding.dto.response.UserBehaviorResponse;
 import com.example.user.sharding.entity.UserBehavior;
+import org.mapstruct.Mapper;
+import org.mapstruct.factory.Mappers;
 
-/** UserBehavior 实体 → UserBehaviorResponse 转换。 */
-public final class UserBehaviorConverter {
+/** UserBehavior 实体 → UserBehaviorResponse（MapStruct）。 */
+@Mapper(componentModel = "spring")
+public interface UserBehaviorConverter {
 
-    private UserBehaviorConverter() {
-    }
+    UserBehaviorConverter INSTANCE = Mappers.getMapper(UserBehaviorConverter.class);
 
-    public static UserBehaviorResponse toResponse(UserBehavior behavior) {
-        return new UserBehaviorResponse(behavior.getId(), behavior.getUserId(),
-                behavior.getAction(), behavior.getDescription(), behavior.getCreateTime());
-    }
+    UserBehaviorResponse toResponse(UserBehavior behavior);
 }

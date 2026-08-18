@@ -1,6 +1,8 @@
 package com.example.user.sharding.service;
 
 import com.example.id.SnowflakeIdGenerator;
+import com.example.user.sharding.converter.UserBehaviorConverter;
+import com.example.user.sharding.dto.response.UserBehaviorResponse;
 import com.example.user.sharding.entity.UserBehavior;
 import com.example.user.sharding.mapper.ShardingUserBehaviorMapper;
 import org.springframework.stereotype.Service;
@@ -22,16 +24,19 @@ public class ShardingUserBehaviorService {
     private static final int MAX_LIMIT = 200;
 
     private final ShardingUserBehaviorMapper shardingUserBehaviorMapper;
+    private final UserBehaviorConverter userBehaviorConverter;
 
     /** 本机单实例固定 machineId；多实例部署时改为配置注入，避免雪花冲突 */
     private final SnowflakeIdGenerator idGenerator = new SnowflakeIdGenerator(3L);
 
-    public ShardingUserBehaviorService(ShardingUserBehaviorMapper shardingUserBehaviorMapper) {
+    public ShardingUserBehaviorService(ShardingUserBehaviorMapper shardingUserBehaviorMapper,
+                                  UserBehaviorConverter userBehaviorConverter) {
         this.shardingUserBehaviorMapper = shardingUserBehaviorMapper;
+        this.userBehaviorConverter = userBehaviorConverter;
     }
 
     /** 创建行为：雪花 id + 单分片插入，返回带 create_time 的完整记录。 */
-    public UserBehavior create(Long userId, String action, String description) {
+    public UserBehaviorResponse create(Long userId, String action, String description) {
         validateCreate(userId, action, description);
         UserBehavior record = new UserBehavior();
         record.setId(idGenerator.nextId());
@@ -40,11 +45,12 @@ public class ShardingUserBehaviorService {
         record.setDescription(description);
         shardingUserBehaviorMapper.insertUserBehavior(record);
         // create_time 由数据库默认值填充，插入后按 id 回查拿到真实值
-        return shardingUserBehaviorMapper.selectById(record.getId());
+        UserBehavior saved = shardingUserBehaviorMapper.selectById(record.getId());
+        return userBehaviorConverter.toResponse(saved);
     }
 
     /** 按用户查询最近行为（单分片）。 */
-    public List<UserBehavior> listByUserId(Long userId, Integer limit) {
+    public List<UserBehaviorResponse> listByUserId(Long userId, Integer limit) {
         if (userId == null || userId <= 0) {
             throw new IllegalArgumentException("userId 必须为正整数");
         }
@@ -52,7 +58,9 @@ public class ShardingUserBehaviorService {
         if (actualLimit <= 0 || actualLimit > MAX_LIMIT) {
             throw new IllegalArgumentException("limit 超出范围: 1~" + MAX_LIMIT);
         }
-        return shardingUserBehaviorMapper.selectByUserId(userId, actualLimit);
+        return shardingUserBehaviorMapper.selectByUserId(userId, actualLimit).stream()
+                .map(userBehaviorConverter::toResponse)
+                .toList();
     }
 
     private void validateCreate(Long userId, String action, String description) {

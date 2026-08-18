@@ -5,6 +5,8 @@ import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.example.exception.BusinessException;
 import com.example.exception.ErrorCode;
 import com.example.id.SnowflakeIdGenerator;
+import com.example.user.converter.UserConverter;
+import com.example.user.dto.response.UserResponse;
 import com.example.user.entity.User;
 import com.example.user.mapper.UserMapper;
 import org.springframework.stereotype.Service;
@@ -17,12 +19,14 @@ public class UserService {
     private static final String ID_CARD_PATTERN = "^\\d{17}[\\dXx]$";
 
     private final UserMapper userMapper;
+    private final UserConverter userConverter;
 
     /** 本机单实例固定 machineId；多实例部署时改为配置注入，避免雪花冲突 */
     private final SnowflakeIdGenerator idGenerator = new SnowflakeIdGenerator(3L);
 
-    public UserService(UserMapper userMapper) {
+    public UserService(UserMapper userMapper, UserConverter userConverter) {
         this.userMapper = userMapper;
+        this.userConverter = userConverter;
     }
 
     @SentinelResource(
@@ -30,7 +34,7 @@ public class UserService {
             blockHandler = "getUserInfoBlock",
             fallback = "getUserInfoFallback"
     )
-    public User getUserInfo(String userId) {
+    public UserResponse getUserInfo(String userId) {
         if ("err".equals(userId)) {
             throw new RuntimeException("user data error");
         }
@@ -40,16 +44,17 @@ public class UserService {
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("userId 必须是数字");
         }
-        // 真实查询 users 表（SQL 见 UserMapper.xml）
-        return userMapper.selectUserById(id)
+        // 真实查询 users 表（SQL 见 UserMapper.xml），实体仅在 Service 内部流转
+        User user = userMapper.selectUserById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "user not found: " + userId));
+        return userConverter.toResponse(user);
     }
 
     /**
      * 保存用户：雪花 id + 显式列插入；idCard 空/缺失规范化为空串（框架加密后落库），
      * create_time 由数据库默认值填充，插入后回查返回完整用户（idCard 为脱敏碎片）。
      */
-    public User saveUser(String nickname, String idCard) {
+    public UserResponse saveUser(String nickname, String idCard) {
         validateNickname(nickname);
         String normalizedIdCard = normalizeIdCard(idCard);
         User user = User.builder()
@@ -60,15 +65,16 @@ public class UserService {
                 .idCard(normalizedIdCard)
                 .build();
         userMapper.insertUser(user);
-        return userMapper.selectUserById(user.getId())
+        User saved = userMapper.selectUserById(user.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "user not found after save: " + user.getId()));
+        return userConverter.toResponse(saved);
     }
 
-    public User getUserInfoBlock(String userId, BlockException ex) {
+    public UserResponse getUserInfoBlock(String userId, BlockException ex) {
         return null;
     }
 
-    public User getUserInfoFallback(String userId, Throwable t) {
+    public UserResponse getUserInfoFallback(String userId, Throwable t) {
         return null;
     }
 

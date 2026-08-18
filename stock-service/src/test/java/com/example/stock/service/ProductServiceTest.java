@@ -1,5 +1,7 @@
 package com.example.stock.service;
 
+import com.example.stock.converter.ProductConverter;
+import com.example.stock.dto.response.ProductResponse;
 import com.example.stock.entity.Product;
 import com.example.stock.dto.request.ProductCreateRequest;
 import com.example.stock.es.ProductDocument;
@@ -38,7 +40,7 @@ class ProductServiceTest {
     void setUp() {
         productMapper = mock(ProductMapper.class);
         operations = mock(ElasticsearchOperations.class);
-        productService = new ProductService(productMapper, operations);
+        productService = new ProductService(productMapper, operations, ProductConverter.INSTANCE);
     }
 
     @Test
@@ -53,12 +55,12 @@ class ProductServiceTest {
                         .createTime(LocalDateTime.now())
                         .build()));
 
-        Product saved = productService.save(request);
+        ProductResponse saved = productService.save(request);
 
         verify(productMapper).insertProduct(any(Product.class));
-        assertThat(saved.getId()).isNotNull();
-        assertThat(saved.getName()).isEqualTo("华为 Mate 70 Pro");
-        assertThat(saved.getDescription()).isEqualTo("麒麟芯片旗舰手机");
+        assertThat(saved.id()).isNotNull();
+        assertThat(saved.name()).isEqualTo("华为 Mate 70 Pro");
+        assertThat(saved.description()).isEqualTo("麒麟芯片旗舰手机");
     }
 
     @Test
@@ -94,12 +96,12 @@ class ProductServiceTest {
         when(hits.stream()).thenReturn(Stream.of(hit));
         when(operations.search(any(NativeQuery.class), eq(ProductDocument.class))).thenReturn(hits);
 
-        List<Product> result = productService.searchByName("华为");
+        List<ProductResponse> result = productService.searchByName("华为");
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getId()).isEqualTo(100L);
-        assertThat(result.get(0).getName()).isEqualTo("华为 Mate 70 Pro");
-        assertThat(result.get(0).getPrice()).isEqualByComparingTo("6999.00");
+        assertThat(result.get(0).id()).isEqualTo(100L);
+        assertThat(result.get(0).name()).isEqualTo("华为 Mate 70 Pro");
+        assertThat(result.get(0).price()).isEqualByComparingTo("6999.00");
         verify(operations).search(any(NativeQuery.class), eq(ProductDocument.class));
     }
 
@@ -111,10 +113,10 @@ class ProductServiceTest {
                 Product.builder().id(1L).name("华为 Mate 60").brand("华为")
                         .price(new BigDecimal("4999.00")).build()));
 
-        List<Product> result = productService.searchByName("华为");
+        List<ProductResponse> result = productService.searchByName("华为");
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getId()).isEqualTo(1L);
+        assertThat(result.get(0).id()).isEqualTo(1L);
         verify(productMapper).selectByNameLike("华为");
     }
 
