@@ -51,6 +51,7 @@
         <module>user-service</module>
         <module>order-service</module>
         <module>stock-service</module>
+        <module>task-service</module>
         <module>gateway-service</module>
     </modules>
 

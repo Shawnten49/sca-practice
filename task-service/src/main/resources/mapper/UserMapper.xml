@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.task.mapper.UserMapper">
+
+    <!-- 列白名单：只读业务展示字段，身份证等敏感列不进入 Redis -->
+    <select id="selectByShard" resultType="com.example.task.model.UserRow">
+        SELECT id, nickname, points, create_time
+        FROM users
+        WHERE id &gt; #{lastId} AND MOD(id, #{shardTotal}) = #{shardIndex}
+        ORDER BY id ASC
+        LIMIT #{batchSize}
+    </select>
+
+</mapper>

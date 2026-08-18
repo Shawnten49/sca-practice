@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.task.mapper.OrderShardMapper">
+
+    <!-- 游标分页：create_time 范围 + id 游标，禁止一次性全量 -->
+    <select id="selectRecent" resultType="com.example.task.model.OrderRow">
+        SELECT id, user_id, product_id, count, create_time
+        FROM ${table}
+        WHERE create_time &gt;= #{cutoff} AND id &gt; #{lastId}
+        ORDER BY id ASC
+        LIMIT #{batchSize}
+    </select>
+
+</mapper>

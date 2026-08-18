@@ -1,0 +1,69 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: task-service
+  datasource:
+    dynamic:
+      primary: stock
+      strict: true
+      datasource:
+        user:
+          url: jdbc:mysql://127.0.0.1:3306/seata_user?useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+          username: root
+          password: ""
+          driver-class-name: com.mysql.cj.jdbc.Driver
+          hikari:
+            maximum-pool-size: 10
+            minimum-idle: 1
+        order:
+          url: jdbc:mysql://127.0.0.1:3306/seata_order?useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+          username: root
+          password: ""
+          driver-class-name: com.mysql.cj.jdbc.Driver
+          hikari:
+            maximum-pool-size: 10
+            minimum-idle: 1
+        stock:
+          url: jdbc:mysql://127.0.0.1:3306/seata_stock?useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+          username: root
+          password: ""
+          driver-class-name: com.mysql.cj.jdbc.Driver
+          hikari:
+            maximum-pool-size: 10
+            minimum-idle: 1
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+xxl:
+  job:
+    admin-addresses: http://127.0.0.1:7080/
+    appname: task-service
+    port: 9999
+    access-token: default_token
+    log-path: /Users/shawn/logs/xxl-job/task-service
+
+app:
+  task:
+    batch-size: 500
+    batch-sleep-ms: 0
+    order-days: 3
+    product-days: 3
+    order-ttl: 3d
+    user-ttl: 7d
+    product-ttl: 3d
+    order-shard-tables: orders_0,orders_1,orders_2,orders_3
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
