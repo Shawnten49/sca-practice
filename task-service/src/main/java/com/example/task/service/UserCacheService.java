@@ -1,5 +1,6 @@
 package com.example.task.service;
 
+import com.example.common.CacheKeys;
 import com.example.task.config.TaskProperties;
 import com.example.task.mapper.UserMapper;
 import com.example.dto.UserDTO;
@@ -15,7 +16,7 @@ import java.util.List;
 @Service
 public class UserCacheService {
 
-    private static final String KEY_PREFIX = "task:user:";
+    private static final String KEY_PREFIX = CacheKeys.USER_PREFIX;
 
     private final UserMapper userMapper;
     private final TaskCacheWriter cacheWriter;

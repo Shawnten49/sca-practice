@@ -1,5 +1,6 @@
 package com.example.task.service;
 
+import com.example.common.CacheKeys;
 import com.example.task.config.TaskProperties;
 import com.example.task.mapper.ProductMapper;
 import com.example.dto.ProductDTO;
@@ -16,7 +17,7 @@ import java.util.List;
 @Service
 public class ProductCacheService {
 
-    private static final String KEY_PREFIX = "task:product:";
+    private static final String KEY_PREFIX = CacheKeys.PRODUCT_PREFIX;
 
     private final ProductMapper productMapper;
     private final TaskCacheWriter cacheWriter;

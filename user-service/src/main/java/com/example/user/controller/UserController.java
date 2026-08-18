@@ -1,8 +1,8 @@
 package com.example.user.controller;
 
 import com.example.common.Result;
-import com.example.user.dto.request.UserCreateRequest;
 import com.example.dto.response.UserResponse;
+import com.example.user.dto.request.UserCreateRequest;
 import com.example.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,6 +39,13 @@ public class UserController {
         UserResponse user = userService.getUserInfo(id);
         return user == null ? Result.fail(500, "服务降级，请稍后再试")
                 : Result.ok(user);
+    }
+
+    /** 从缓存读取用户（纯缓存读，未命中 data 为 null） */
+    @GetMapping("/user/cache")
+    @Operation(summary = "从缓存读取用户信息")
+    public Result<UserResponse> userFromCache(@RequestParam Long userId) {
+        return Result.ok(userService.getUserFromCache(userId));
     }
 
     /** 保存用户：idCard 加密存储（ShardingSphere !ENCRYPT），返回脱敏碎片 */

@@ -1,5 +1,6 @@
 package com.example.task.service;
 
+import com.example.common.CacheKeys;
 import com.example.task.config.TaskProperties;
 import com.example.task.mapper.OrderShardMapper;
 import com.example.dto.OrderDTO;
@@ -16,7 +17,7 @@ import java.util.List;
 @Service
 public class OrderCacheService {
 
-    private static final String KEY_PREFIX = "task:order:";
+    private static final String KEY_PREFIX = CacheKeys.ORDER_PREFIX;
 
     private final OrderShardMapper orderShardMapper;
     private final TaskCacheWriter cacheWriter;

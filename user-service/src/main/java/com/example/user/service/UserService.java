@@ -2,13 +2,18 @@ package com.example.user.service;
 
 import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import com.alibaba.csp.sentinel.slots.block.BlockException;
+import com.example.common.CacheKeys;
+import com.example.converter.UserConverter;
+import com.example.dto.UserDTO;
+import com.example.dto.response.UserResponse;
+import com.example.entity.User;
 import com.example.exception.BusinessException;
 import com.example.exception.ErrorCode;
 import com.example.id.SnowflakeIdGenerator;
-import com.example.converter.UserConverter;
-import com.example.dto.response.UserResponse;
-import com.example.entity.User;
 import com.example.user.mapper.UserMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -20,13 +25,18 @@ public class UserService {
 
     private final UserMapper userMapper;
     private final UserConverter userConverter;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final ObjectMapper objectMapper;
 
     /** 本机单实例固定 machineId；多实例部署时改为配置注入，避免雪花冲突 */
     private final SnowflakeIdGenerator idGenerator = new SnowflakeIdGenerator(3L);
 
-    public UserService(UserMapper userMapper, UserConverter userConverter) {
+    public UserService(UserMapper userMapper, UserConverter userConverter,
+                       StringRedisTemplate stringRedisTemplate, ObjectMapper objectMapper) {
         this.userMapper = userMapper;
         this.userConverter = userConverter;
+        this.stringRedisTemplate = stringRedisTemplate;
+        this.objectMapper = objectMapper;
     }
 
     @SentinelResource(
@@ -68,6 +78,26 @@ public class UserService {
         User saved = userMapper.selectUserById(user.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "user not found after save: " + user.getId()));
         return userConverter.toResponse(saved);
+    }
+
+    /**
+     * 从缓存读取用户（task-service 定时刷新，key: task:user:{id}）。
+     * 纯缓存读：未命中返回 null，不回源 DB。
+     */
+    public UserResponse getUserFromCache(Long userId) {
+        if (userId == null || userId <= 0) {
+            throw new IllegalArgumentException("userId 必须为正整数");
+        }
+        String json = stringRedisTemplate.opsForValue().get(CacheKeys.USER_PREFIX + userId);
+        if (json == null) {
+            return null;
+        }
+        try {
+            UserDTO dto = objectMapper.readValue(json, UserDTO.class);
+            return userConverter.toResponse(dto);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("缓存用户数据解析失败: userId=" + userId, e);
+        }
     }
 
     public UserResponse getUserInfoBlock(String userId, BlockException ex) {

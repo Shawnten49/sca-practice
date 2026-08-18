@@ -88,4 +88,26 @@ class UserControllerTest {
                         .content("{\"nickname\":\"\",\"idCard\":\"110101199003071234\"}"))
                 .andExpect(status().isBadRequest());
     }
+    
+    void userFromCacheReturnsCachedUser() throws Exception {
+        when(userService.getUserFromCache(1L)).thenReturn(
+                new UserResponse(1L, "demo", 100, null, null, null));
+
+        mockMvc.perform(get("/user/cache").param("userId", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("1code").value(0))
+                .andExpect(jsonPath("1data.id").value(1))
+                .andExpect(jsonPath("1data.nickname").value("demo"))
+                .andExpect(jsonPath("1data.points").value(100));
+    }
+
+    
+    void userFromCacheMissReturnsNullData() throws Exception {
+        when(userService.getUserFromCache(999L)).thenReturn(null);
+
+        mockMvc.perform(get("/user/cache").param("userId", "999"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("1code").value(0))
+                .andExpect(jsonPath("1data").value(org.hamcrest.Matchers.nullValue()));
+    }
 }

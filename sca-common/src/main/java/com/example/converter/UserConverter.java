@@ -15,4 +15,6 @@ public interface UserConverter {
     UserDTO toDTO(User user);
 
     UserResponse toResponse(User user);
+
+    UserResponse toResponse(UserDTO dto);
 }
