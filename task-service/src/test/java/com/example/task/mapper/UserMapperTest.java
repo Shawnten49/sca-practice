@@ -1,6 +1,6 @@
 package com.example.task.mapper;
 
-import com.example.dto.UserDTO;
+import com.example.task.entity.User;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.jupiter.api.Test;
@@ -28,17 +28,17 @@ class UserMapperTest {
             UserMapper mapper = session.getMapper(UserMapper.class);
 
             // shardTotal=2, shardIndex=0 → MOD(id,2)=0 → 2,4,6
-            List<UserDTO> page1 = mapper.selectByShard(0L, 0, 2, 2);
-            assertThat(page1).extracting(UserDTO::id).containsExactly(2L, 4L);
+            List<User> page1 = mapper.selectByShard(0L, 0, 2, 2);
+            assertThat(page1).extracting(User::getId).containsExactly(2L, 4L);
 
-            List<UserDTO> page2 = mapper.selectByShard(4L, 0, 2, 2);
-            assertThat(page2).extracting(UserDTO::id).containsExactly(6L);
+            List<User> page2 = mapper.selectByShard(4L, 0, 2, 2);
+            assertThat(page2).extracting(User::getId).containsExactly(6L);
 
             assertThat(mapper.selectByShard(6L, 0, 2, 2)).isEmpty();
 
             // shardIndex=1 → 1,3,5,7
-            List<UserDTO> odd = mapper.selectByShard(0L, 1, 2, 10);
-            assertThat(odd).extracting(UserDTO::id).containsExactly(1L, 3L, 5L, 7L);
+            List<User> odd = mapper.selectByShard(0L, 1, 2, 10);
+            assertThat(odd).extracting(User::getId).containsExactly(1L, 3L, 5L, 7L);
         }
     }
 }

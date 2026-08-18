@@ -2,7 +2,7 @@ package com.example.task.service;
 
 import com.example.task.config.TaskProperties;
 import com.example.task.mapper.OrderShardMapper;
-import com.example.dto.OrderDTO;
+import com.example.task.entity.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -32,8 +32,8 @@ class OrderCacheServiceTest {
     @Mock
     private TaskCacheWriter cacheWriter;
 
-    private static OrderDTO order(long id) {
-        return new OrderDTO(id, 10L, 20L, 1, LocalDateTime.of(2026, 8, 18, 10, 0));
+    private static Order order(long id) {
+        return new Order(id, 10L, 20L, 1, LocalDateTime.of(2026, 8, 18, 10, 0));
     }
 
     @Test

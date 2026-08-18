@@ -3,7 +3,7 @@
 <mapper namespace="com.example.task.mapper.OrderShardMapper">
 
     <!-- 游标分页：create_time 范围 + id 游标，禁止一次性全量 -->
-    <select id="selectRecent" resultType="com.example.dto.OrderDTO">
+    <select id="selectRecent" resultType="com.example.task.entity.Order">
         SELECT id, user_id, product_id, count, create_time
         FROM ${table}
         WHERE create_time &gt;= #{cutoff} AND id &gt; #{lastId}

@@ -1,7 +1,7 @@
 package com.example.task.mapper;
 
 import com.baomidou.dynamic.datasource.annotation.DS;
-import com.example.dto.ProductDTO;
+import com.example.task.entity.Product;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -13,7 +13,7 @@ import java.util.List;
 @Mapper
 public interface ProductMapper {
 
-    List<ProductDTO> selectRecentByShard(@Param("cutoff") LocalDateTime cutoff,
+    List<Product> selectRecentByShard(@Param("cutoff") LocalDateTime cutoff,
                                          @Param("lastId") Long lastId,
                                          @Param("shardIndex") int shardIndex,
                                          @Param("shardTotal") int shardTotal,

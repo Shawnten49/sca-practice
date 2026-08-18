@@ -1,6 +1,6 @@
 package com.example.task.mapper;
 
-import com.example.dto.OrderDTO;
+import com.example.task.entity.Order;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.jupiter.api.Test;
@@ -32,11 +32,11 @@ class OrderShardMapperTest {
             OrderShardMapper mapper = session.getMapper(OrderShardMapper.class);
             LocalDateTime cutoff = LocalDateTime.of(2026, 8, 17, 0, 0);
 
-            List<OrderDTO> page1 = mapper.selectRecent("orders_0", cutoff, 0L, 2);
-            assertThat(page1).extracting(OrderDTO::id).containsExactly(1L, 2L);
+            List<Order> page1 = mapper.selectRecent("orders_0", cutoff, 0L, 2);
+            assertThat(page1).extracting(Order::getId).containsExactly(1L, 2L);
 
-            List<OrderDTO> page2 = mapper.selectRecent("orders_0", cutoff, 2L, 2);
-            assertThat(page2).extracting(OrderDTO::id).containsExactly(3L);
+            List<Order> page2 = mapper.selectRecent("orders_0", cutoff, 2L, 2);
+            assertThat(page2).extracting(Order::getId).containsExactly(3L);
 
             assertThat(mapper.selectRecent("orders_0", cutoff, 3L, 2)).isEmpty();
         }
@@ -49,8 +49,8 @@ class OrderShardMapperTest {
             OrderShardMapper mapper = session.getMapper(OrderShardMapper.class);
             LocalDateTime cutoff = LocalDateTime.of(2026, 8, 18, 12, 0);
 
-            List<OrderDTO> recent = mapper.selectRecent("orders_0", cutoff, 0L, 10);
-            assertThat(recent).extracting(OrderDTO::id).containsExactly(3L);
+            List<Order> recent = mapper.selectRecent("orders_0", cutoff, 0L, 10);
+            assertThat(recent).extracting(Order::getId).containsExactly(3L);
         }
     }
 }
