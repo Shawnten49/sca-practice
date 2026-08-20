@@ -11,6 +11,7 @@ import com.example.exception.BusinessException;
 import com.example.exception.ErrorCode;
 import com.example.id.SnowflakeIdGenerator;
 import com.example.user.mapper.UserMapper;
+import com.example.user.metrics.UserMetricsService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -27,16 +28,18 @@ public class UserService {
     private final UserConverter userConverter;
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
+    private final UserMetricsService userMetricsService;
 
     /** 本机单实例固定 machineId；多实例部署时改为配置注入，避免雪花冲突 */
     private final SnowflakeIdGenerator idGenerator = new SnowflakeIdGenerator(3L);
 
     public UserService(UserMapper userMapper, UserConverter userConverter,
-                       StringRedisTemplate stringRedisTemplate, ObjectMapper objectMapper) {
+                       StringRedisTemplate stringRedisTemplate, ObjectMapper objectMapper, UserMetricsService userMetricsService) {
         this.userMapper = userMapper;
         this.userConverter = userConverter;
         this.stringRedisTemplate = stringRedisTemplate;
         this.objectMapper = objectMapper;
+        this.userMetricsService = userMetricsService;
     }
 
     @SentinelResource(
@@ -45,6 +48,7 @@ public class UserService {
             fallback = "getUserInfoFallback"
     )
     public UserResponse getUserInfo(String userId) {
+        Long start = System.currentTimeMillis();
         if ("err".equals(userId)) {
             throw new RuntimeException("user data error");
         }
@@ -57,6 +61,9 @@ public class UserService {
         // 真实查询 users 表（SQL 见 UserMapper.xml），实体仅在 Service 内部流转
         User user = userMapper.selectUserById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "user not found: " + userId));
+
+        userMetricsService.recordUserQuery(System.currentTimeMillis() - start);
+
         return userConverter.toResponse(user);
     }
 
@@ -105,6 +112,10 @@ public class UserService {
     }
 
     public UserResponse getUserInfoFallback(String userId, Throwable t) {
+        if (t instanceof BusinessException) {
+            throw (BusinessException) t;   // 业务异常透传，GlobalExceptionHandler 返回 404
+        }
+
         return null;
     }
 

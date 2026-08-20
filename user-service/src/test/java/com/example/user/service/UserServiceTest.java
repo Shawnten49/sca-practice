@@ -3,6 +3,7 @@ package com.example.user.service;
 import com.example.converter.UserConverter;
 import com.example.dto.response.UserResponse;
 import com.example.user.mapper.UserMapper;
+import com.example.user.metrics.UserMetricsService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.Test;
@@ -19,8 +20,9 @@ class UserServiceTest {
     private final UserMapper userMapper = mock(UserMapper.class);
     private final StringRedisTemplate redis = mock(StringRedisTemplate.class);
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+    private final UserMetricsService userMetricsService = mock(UserMetricsService.class);
     private final UserService userService =
-            new UserService(userMapper, UserConverter.INSTANCE, redis, objectMapper);
+            new UserService(userMapper, UserConverter.INSTANCE, redis, objectMapper,userMetricsService);
 
     @SuppressWarnings("unchecked")
     private ValueOperations<String, String> valueOps() {
