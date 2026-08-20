@@ -51,9 +51,9 @@
         </encoder>
     </appender>
 
-    <!-- 开发环境：DEBUG + 控制台 -->
+    <!-- 开发环境：INFO + 控制台（需要 DEBUG 时用 logging.level.root=DEBUG 临时开启） -->
     <springProfile name="default,dev">
-        <root level="DEBUG">
+        <root level="INFO">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="FILE_ALL"/>
             <appender-ref ref="FILE_ERROR"/>

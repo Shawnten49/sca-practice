@@ -1,5 +1,12 @@
 server:
   port: 8081
+  tomcat:
+    keep-alive-timeout: 120s
+    max-keep-alive-requests: 10000
+    max-connections: 20000
+    accept-count: 1000
+    threads:
+      max: 400
 
 spring:
   application:
